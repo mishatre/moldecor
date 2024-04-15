@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
+    "types": "./types/index.d.ts",
     "scripts": {
         "build": "tsc && esbuild ./src/index.ts --bundle --target=es2019 --format=esm --sourcemap --minify --packages=external --outfile=dist/index.js"
     },
