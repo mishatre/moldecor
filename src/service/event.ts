@@ -1,6 +1,6 @@
 import { EventSchema } from 'moleculer';
 
-import { PartialRequired, getMetadata, setMetadata } from '../utils';
+import { PartialRequired, getMetadata, setMetadata } from '../utils/index.js';
 
 export type EventOptions = PartialRequired<Exclude<EventSchema, 'handler'>, 'name'>;
 

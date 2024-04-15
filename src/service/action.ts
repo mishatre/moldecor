@@ -1,6 +1,6 @@
 import { ActionSchema, Context } from 'moleculer';
 
-import { PartialRequired, getMetadata, setMetadata } from '../utils';
+import { PartialRequired, getMetadata, setMetadata } from '../utils/index.js';
 
 export type ActionOptions = PartialRequired<Exclude<ActionSchema, 'handler'>, 'name'>;
 

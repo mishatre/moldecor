@@ -4,9 +4,8 @@ import {
     ServiceSchema,
     ServiceSettingSchema,
 } from 'moleculer';
-import { inherits } from 'node:util';
 
-import { getMetadata, getMetadataKeys, setMetadata } from '../utils';
+import { getMetadata, getMetadataKeys, setMetadata } from '../utils/index.js';
 
 /* -------------------------------------------- types ------------------------------------------- */
 

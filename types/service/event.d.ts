@@ -1,5 +1,5 @@
 import { EventSchema } from 'moleculer';
-import { PartialRequired } from '../utils';
+import { PartialRequired } from '../utils/index.js';
 export type EventOptions = PartialRequired<Exclude<EventSchema, 'handler'>, 'name'>;
 export type LifeCycleEventNames = 'created' | 'started' | 'stopped';
 export declare function Event(options?: EventSchema): MethodDecorator;

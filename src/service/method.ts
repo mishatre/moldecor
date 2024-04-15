@@ -1,4 +1,4 @@
-import { getMetadata, setMetadata } from '../utils';
+import { getMetadata, setMetadata } from '../utils/index.js';
 
 const MoleculerMethod = <T>(
     target: Object,

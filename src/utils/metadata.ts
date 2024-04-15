@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { deepClone } from './helpers';
+import { deepClone } from './helpers.js';
 
 export const META_PREFIX: string = 'moleculer:decorators';
 

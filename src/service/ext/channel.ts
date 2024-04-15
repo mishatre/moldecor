@@ -1,4 +1,4 @@
-import { getMetadata, setMetadata } from '../../utils';
+import { getMetadata, setMetadata } from '../../utils/index.js';
 
 export type ChanneltOptions = Partial<Exclude<any, 'handler'>> & { name: string };
 
