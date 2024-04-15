@@ -21,6 +21,6 @@
         "reflect-metadata": "^0.2.2"
     },
     "peerDependencies": {
-        "moleculer": "^0.14.33"
+        "moleculer": "0.14.x"
     }
 }
