@@ -2,11 +2,12 @@
     "name": "moldecor",
     "version": "1.0.0",
     "description": "",
-    "main": "./dist/index.js",
+    "main": "./dist/index.mjs",
+    "exports": "./dist/index.mjs",
     "type": "module",
-    "types": "./types/index.d.ts",
+    "typings": "./dist/index.d.ts",
     "scripts": {
-        "build": "tsc && esbuild ./src/index.ts --bundle --target=es2019 --format=esm --sourcemap --minify --packages=external --outfile=dist/index.js"
+        "build": "rm -rf ./dist && tsc && esbuild ./src/index.ts --bundle --target=es2019 --format=esm --sourcemap --packages=external --outfile=dist/index.mjs"
     },
     "keywords": [],
     "author": "",
@@ -15,13 +16,15 @@
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
         "@types/node": "^20.12.7",
         "esbuild": "^0.20.2",
-        "moleculer": "^0.14.33",
         "typescript": "^5.4.5"
     },
     "dependencies": {
         "reflect-metadata": "^0.2.2"
     },
     "peerDependencies": {
-        "moleculer": "0.14.x"
+        "moleculer": "~0.14.x"
+    },
+    "engines": {
+        "node": ">=16"
     }
 }
