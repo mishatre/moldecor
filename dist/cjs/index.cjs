@@ -1,3 +1,36 @@
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/index.ts
+var src_exports = {};
+__export(src_exports, {
+  Action: () => Action,
+  Channel: () => Channel,
+  Created: () => Created,
+  Event: () => Event,
+  Method: () => Method,
+  Service: () => Service,
+  Started: () => Started,
+  Stopped: () => Stopped
+});
+module.exports = __toCommonJS(src_exports);
+
 // src/utils/helpers.ts
 function deepClone(obj) {
   if (obj === null || typeof obj !== "object") {
@@ -25,7 +58,7 @@ function deepClone(obj) {
 }
 
 // src/utils/metadata.ts
-import "reflect-metadata";
+var import_reflect_metadata = require("reflect-metadata");
 var META_PREFIX = "moleculer:decorators";
 function isKey(key, scope = "") {
   return typeof key === "string" && key.startsWith(`${META_PREFIX}${scope}:`);
@@ -54,6 +87,21 @@ function getMetadata(target, key, scope = "") {
 }
 function setMetadata(target, key, value, scope = "") {
   Reflect.defineMetadata(prefixKey(key, scope), value, target);
+}
+
+// src/service/ext/channel.ts
+function Channel(options) {
+  return (target, propertyKey, descriptor) => {
+    const handler = descriptor.value;
+    if (!handler || typeof handler !== "function") {
+      throw new TypeError("An event handler must be a function");
+    }
+    const name = propertyKey.toString();
+    const channels = getMetadata(target, "channels", "service") || {};
+    channels[name] = Object.assign({}, { handler, name }, options);
+    setMetadata(target, "channels", channels, "service");
+    return descriptor;
+  };
 }
 
 // src/service/action.ts
@@ -117,11 +165,9 @@ var MoleculerMethod = (target, propertyKey, descriptor) => {
 var Method = MoleculerMethod;
 
 // src/service/service.ts
-import {
-  Service as MoleculerService
-} from "moleculer";
+var import_moleculer = require("moleculer");
 function isServiceClass(constructor) {
-  return typeof constructor === "function" && MoleculerService.isPrototypeOf(constructor);
+  return typeof constructor === "function" && import_moleculer.Service.isPrototypeOf(constructor);
 }
 function getServiceInnerSchema(constructor) {
   if (!isServiceClass(constructor)) {
@@ -178,34 +224,4 @@ function Service(options = {}) {
     };
   };
 }
-
-// src/service/ext/channel.ts
-function Channel(options) {
-  return (target, propertyKey, descriptor) => {
-    const handler = descriptor.value;
-    if (!handler || typeof handler !== "function") {
-      throw new TypeError("An event handler must be a function");
-    }
-    const name = propertyKey.toString();
-    const channels = getMetadata(target, "channels", "service") || {};
-    channels[name] = Object.assign({}, { handler, name }, options);
-    setMetadata(target, "channels", channels, "service");
-    return descriptor;
-  };
-}
-export {
-  Action,
-  Channel,
-  Created,
-  Event,
-  Method,
-  Service,
-  Started,
-  Stopped,
-  convertServiceMixins,
-  createLifeCycleEvent,
-  getServiceInnerSchema,
-  getServiceSchema,
-  isServiceClass
-};
-//# sourceMappingURL=index.mjs.map
+//# sourceMappingURL=index.cjs.map

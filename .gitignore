@@ -1,2 +1,6 @@
 
 node_modules
+dist/types/tsdoc-metadata.json
+lib
+temp
+etc
