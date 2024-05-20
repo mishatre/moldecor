@@ -16,7 +16,7 @@ export function Action<P = {}, T = (ctx: Context<P>) => void>(
 ): MethodDecorator<T> {
     return (target, propertyKey, descriptor) => {
         const handler = descriptor.value;
-        assert(!handler || typeof handler !== 'function', 'An action must be a function');
+        assert(handler && typeof handler === 'function', 'An action must be a function');
 
         const name = propertyKey.toString();
         const actions =

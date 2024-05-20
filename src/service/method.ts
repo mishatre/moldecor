@@ -8,7 +8,7 @@ const MoleculerMethod = <T>(
     descriptor: TypedPropertyDescriptor<T>,
 ) => {
     const handler = descriptor.value;
-    assert(!handler || typeof handler !== 'function', 'A method must be a function');
+    assert(handler && typeof handler === 'function', 'A method must be a function');
 
     const name = propertyKey.toString();
     const methods =

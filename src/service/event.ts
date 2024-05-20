@@ -14,7 +14,7 @@ export function Event(options?: EventSchema): MethodDecorator {
         descriptor: TypedPropertyDescriptor<T>,
     ) => {
         const handler = descriptor.value;
-        assert(!handler || typeof handler !== 'function', 'An event handler must be a function');
+        assert(handler && typeof handler === 'function', 'An event handler must be a function');
 
         const name = propertyKey.toString();
         const events =
@@ -39,7 +39,7 @@ export function createLifeCycleEvent(name: LifeCycleEventNames): MethodDecorator
     ) => {
         const handler = descriptor.value;
         assert(
-            !handler || typeof handler !== 'function',
+            handler && typeof handler === 'function',
             'An lifecycle event handler must be a function',
         );
 
