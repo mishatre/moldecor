@@ -16,8 +16,8 @@
     "type": "module",
     "scripts": {
         "build:clean": "rm -rf ./dist",
-        "build:esm": "esbuild ./src/index.ts --bundle --target=es2019 --format=esm --sourcemap --packages=external --outfile=dist/esm/index.mjs",
-        "build:cjs": "esbuild ./src/index.ts --bundle --target=es2019 --format=cjs --sourcemap --packages=external --outfile=dist/cjs/index.cjs",
+        "build:esm": "esbuild ./src/index.ts --bundle --target=es2019 --format=esm --sourcemap --external:moleculer --outfile=dist/esm/index.mjs",
+        "build:cjs": "esbuild ./src/index.ts --bundle --target=es2019 --format=cjs --sourcemap --external:moleculer --outfile=dist/cjs/index.cjs",
         "build:types": "tsc && pnpx @microsoft/api-extractor run --local",
         "build": "pnpm run build:clean && pnpm run build:types && pnpm run build:esm && pnpm run build:cjs"
     },
