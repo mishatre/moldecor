@@ -11,6 +11,7 @@
     "typings": "./dist/types/index.d.ts",
     "types": "./dist/types/index.d.ts",
     "files": [
+        "src",
         "dist"
     ],
     "type": "module",
