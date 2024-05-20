@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 import { getMetadata, setMetadata } from '../utils/index.js';
 
 const MoleculerMethod = <T>(
@@ -6,14 +8,12 @@ const MoleculerMethod = <T>(
     descriptor: TypedPropertyDescriptor<T>,
 ) => {
     const handler = descriptor.value;
-
-    if (!handler || typeof handler !== 'function') {
-        throw new TypeError('A method must be a function');
-    }
+    assert(!handler || typeof handler !== 'function', 'A method must be a function');
 
     const name = propertyKey.toString();
-    const methods = getMetadata(target, 'methods', 'service') || {};
-    methods[name] = { handler };
+    const methods =
+        getMetadata<{ [key: string]: { handler: T } }>(target, 'methods', 'service') || {};
+    methods[name] = Object.assign({}, { handler } as { handler: T });
 
     setMetadata(target, 'methods', methods, 'service');
     return descriptor;

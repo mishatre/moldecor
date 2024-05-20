@@ -16,24 +16,26 @@ function prefixKey(key: string, scope: string = '') {
     return key;
 }
 
-export function getMetadataKeys(target: any, scope: string = '') {
+export function getMetadataObject(target: any, scope: string = '') {
     const keys = Reflect.getMetadataKeys(target) || [];
 
-    const metadataKeys: { key: string; metadata: any }[] = [];
-    keys.forEach((key) => {
+    const result = {} as { [key: string]: any };
+    for (const key of keys) {
         if (isKey(key, scope)) {
-            metadataKeys.push({
-                key: key.replace(new RegExp(`^${META_PREFIX}${scope}:`), ''),
-                metadata: getMetadata(target, key, scope),
-            });
+            const field = key.replace(new RegExp(`^${META_PREFIX}${scope}:`), '');
+            result[field] = getMetadata(target, key, scope);
         }
-    });
+    }
 
-    return metadataKeys;
+    return result;
 }
 
-export function getMetadata(target: any, key: string, scope: string = '') {
-    return deepClone(Reflect.getMetadata(prefixKey(key, scope), target));
+export function getMetadata<T>(target: any, key: string, scope: string = ''): T | undefined {
+    const value = Reflect.getMetadata(prefixKey(key, scope), target);
+    if (value) {
+        return deepClone(value);
+    }
+    return undefined;
 }
 
 export function setMetadata(target: any, key: string, value: any, scope: string = '') {

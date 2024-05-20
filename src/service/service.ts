@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {
     Service as MoleculerService,
     ServiceHooks,
@@ -5,117 +6,87 @@ import {
     ServiceSettingSchema,
 } from 'moleculer';
 
-import { getMetadata, getMetadataKeys, setMetadata } from '../utils/index.js';
+import { getMetadata, getMetadataObject, isServiceClass, setMetadata } from '../utils/index.js';
 
 /* -------------------------------------------- types ------------------------------------------- */
-
-export interface ServiceDependency {
-    name: string;
-    version?: string | number;
-}
 
 export interface ServiceOptions<S> {
     name?: string;
     version?: string | number;
     settings?: S & ServiceSettingSchema;
-    dependencies?: string | ServiceDependency | Array<string | ServiceDependency>;
+    dependencies?: ServiceSchema['dependencies'];
     metadata?: any;
-    mixins?: Array<Partial<ServiceSchema> | ServiceConstructor<any>>;
+    mixins?: Array<Partial<ServiceSchema> | ServiceConstructor>;
     hooks?: ServiceHooks;
 
     [name: string]: any;
 }
 
-export interface ServiceConstructor<S> {
-    new (...args: any[]): MoleculerService<S>;
+export interface ServiceConstructor {
+    new (...args: any[]): MoleculerService;
 }
-
-export type ServiceDecorator = <S, T extends ServiceConstructor<S>>(constructor: T) => T;
 
 /* ------------------------------------------- methods ------------------------------------------ */
 
-export function isServiceClass<S>(constructor: any): constructor is ServiceConstructor<S> {
-    return typeof constructor === 'function' && MoleculerService.isPrototypeOf(constructor);
-}
-
-export function getServiceInnerSchema<S>(
-    constructor: ServiceConstructor<S>,
-): Partial<ServiceSchema<S>> {
-    if (!isServiceClass(constructor)) {
-        throw TypeError('Class must extend Service');
+export function convertServiceMixins(schema: ServiceSchema) {
+    if (!schema.mixins) {
+        return schema.mixins;
     }
 
-    const serviceSchema: Partial<ServiceSchema<S>> = {};
-
-    const keys = getMetadataKeys(constructor.prototype, 'service');
-    keys.forEach(({ key, metadata }) => (serviceSchema[key] = metadata));
-
-    return serviceSchema;
-}
-
-export function getServiceSchema<S>(constructor: ServiceConstructor<S>): ServiceSchema<S> {
-    if (!isServiceClass(constructor)) {
-        throw TypeError('Class must extend Service');
-    }
-
-    return (
-        getMetadata(constructor.prototype, 'schema', 'service') ||
-        getServiceInnerSchema(constructor)
-    );
-}
-
-export function convertServiceMixins<S>(schema: ServiceSchema<S>) {
-    if (!schema.mixins) return;
-
-    const convertMixins = <S>(mixins: Array<Partial<ServiceSchema<S>> | ServiceConstructor<S>>) => {
-        return mixins.map((mixin) => {
-            const convertedMixin = isServiceClass<S>(mixin) ? getServiceSchema<S>(mixin) : mixin;
-            if (convertedMixin.mixins) {
-                convertedMixin.mixins = convertMixins(convertedMixin.mixins);
+    const convertMixins = (mixins: Partial<ServiceSchema>[]) =>
+        mixins.map((mixin) => {
+            const converted: Partial<ServiceSchema> = isServiceClass(mixin)
+                ? getMetadata(mixin.prototype, 'schema', 'service') ||
+                  getMetadataObject(mixin.prototype, 'service')
+                : mixin;
+            if (converted.mixins) {
+                converted.mixins = convertMixins(converted.mixins);
             }
-            return convertedMixin;
+            return converted;
         });
-    };
 
-    schema.mixins = convertMixins(schema.mixins);
+    return convertMixins(schema.mixins);
 }
 
 type InstanceGenericType<T extends abstract new (...args: any) => MoleculerService<any>> =
     T extends abstract new (...args: any) => MoleculerService<infer R> ? R : any;
 
-export function Service<T extends ServiceConstructor<any>, S extends InstanceGenericType<T>>(
+function initializeSchema(
+    constructor: ServiceConstructor,
+    options: ServiceOptions<any>,
+): ServiceSchema {
+    const schema = Object.assign(
+        {},
+        {
+            name: constructor.name,
+        },
+        options,
+        getMetadataObject(constructor.prototype, 'service'),
+    );
+
+    // convert mixins
+    schema.mixins = convertServiceMixins(schema);
+    setMetadata(constructor.prototype, 'schema', schema, 'service');
+
+    return schema;
+}
+
+export function Service<T extends ServiceConstructor, S extends InstanceGenericType<T>>(
     options: ServiceOptions<S> = {},
 ) {
     return (constructor: T): T => {
-        if (!isServiceClass<S>(constructor)) {
-            throw TypeError('Class must extend Service');
-        }
+        assert(isServiceClass(constructor), 'Class must extend Service');
 
-        let schema: ServiceSchema<S> = getMetadata(constructor.prototype, 'schema', 'service');
-
-        if (!schema) {
-            // prepare defaults
-            const defaults = {
-                name: constructor.name,
-                ...options,
-            };
-
-            // get schema
-            schema = {
-                ...defaults,
-                ...getServiceInnerSchema(constructor),
-            };
-
-            // convert mixins
-            convertServiceMixins(schema);
-
-            setMetadata(constructor.prototype, 'schema', schema, 'service');
-        }
+        const schema =
+            getMetadata<ServiceSchema>(constructor.prototype, 'schema', 'service') ||
+            initializeSchema(constructor, options);
 
         return class extends constructor {
             constructor(...args: any[]) {
                 super(...args);
-                this.parseServiceSchema(schema);
+                if (schema) {
+                    this.parseServiceSchema(schema);
+                }
             }
         };
     };

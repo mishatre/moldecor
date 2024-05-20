@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { EventSchema } from 'moleculer';
 
 import { PartialRequired, getMetadata, setMetadata } from '../utils/index.js';
@@ -13,13 +14,11 @@ export function Event(options?: EventSchema): MethodDecorator {
         descriptor: TypedPropertyDescriptor<T>,
     ) => {
         const handler = descriptor.value;
-
-        if (!handler || typeof handler !== 'function') {
-            throw new TypeError('An event handler must be a function');
-        }
+        assert(!handler || typeof handler !== 'function', 'An event handler must be a function');
 
         const name = propertyKey.toString();
-        const events = getMetadata(target, 'events', 'service') || {};
+        const events =
+            getMetadata<{ [key: string]: EventSchema }>(target, 'events', 'service') || {};
 
         events[name] = Object.assign({}, { handler, name }, options);
 
@@ -39,10 +38,10 @@ export function createLifeCycleEvent(name: LifeCycleEventNames): MethodDecorator
         descriptor: TypedPropertyDescriptor<T>,
     ) => {
         const handler = descriptor.value;
-
-        if (!handler || typeof handler !== 'function') {
-            throw new TypeError('An lifecycle event handler must be a function');
-        }
+        assert(
+            !handler || typeof handler !== 'function',
+            'An lifecycle event handler must be a function',
+        );
 
         setMetadata(target, name, handler, 'service');
         return descriptor;

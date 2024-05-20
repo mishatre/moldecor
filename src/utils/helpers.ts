@@ -1,3 +1,7 @@
+import { Service } from 'moleculer';
+
+import { ServiceConstructor } from '../service/service.js';
+
 export function cleanRoutePath(str: string): string {
     return str.replace(/[^a-zA-Z0-9-/]/g, '');
 }
@@ -32,4 +36,8 @@ export function deepClone<T extends any>(obj: T): T {
     Object.entries(obj).forEach(([key, value]) => (clone[key] = deepClone(value)));
 
     return clone as T;
+}
+
+export function isServiceClass(constructor: unknown): constructor is ServiceConstructor {
+    return typeof constructor === 'function' && Service.isPrototypeOf(constructor);
 }

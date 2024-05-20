@@ -15,7 +15,12 @@ export function Channel(options?: ChanneltOptions): MethodDecorator {
         }
 
         const name = propertyKey.toString();
-        const channels = getMetadata(target, 'channels', 'service') || {};
+        const channels =
+            getMetadata<{ [key: string]: { handler: T; name: string } }>(
+                target,
+                'channels',
+                'service',
+            ) || {};
 
         channels[name] = Object.assign({}, { handler, name }, options);
 
