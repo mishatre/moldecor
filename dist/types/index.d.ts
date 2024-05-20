@@ -29,24 +29,19 @@ declare type MethodDecorator_2<T> = (target: Object, propertyKey: string | symbo
 
 declare type PartialRequired<T, K extends keyof T> = Partial<T> & Pick<Required<T>, K>;
 
-export declare function Service<T extends ServiceConstructor<any>, S extends InstanceGenericType<T>>(options?: ServiceOptions<S>): (constructor: T) => T;
+export declare function Service<T extends ServiceConstructor, S extends InstanceGenericType<T>>(options?: ServiceOptions<S>): (constructor: T) => T;
 
-declare interface ServiceConstructor<S> {
-    new (...args: any[]): Service_2<S>;
-}
-
-declare interface ServiceDependency {
-    name: string;
-    version?: string | number;
+declare interface ServiceConstructor {
+    new (...args: any[]): Service_2;
 }
 
 declare interface ServiceOptions<S> {
     name?: string;
     version?: string | number;
     settings?: S & ServiceSettingSchema;
-    dependencies?: string | ServiceDependency | Array<string | ServiceDependency>;
+    dependencies?: ServiceSchema['dependencies'];
     metadata?: any;
-    mixins?: Array<Partial<ServiceSchema> | ServiceConstructor<any>>;
+    mixins?: Array<Partial<ServiceSchema> | ServiceConstructor>;
     hooks?: ServiceHooks;
     [name: string]: any;
 }
