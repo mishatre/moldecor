@@ -2690,7 +2690,7 @@ function setMetadata(target, key, value, scope = "") {
 function Action(options) {
   return (target, propertyKey, descriptor) => {
     const handler = descriptor.value;
-    (0, import_assert.default)(!handler || typeof handler !== "function", "An action must be a function");
+    (0, import_assert.default)(handler && typeof handler === "function", "An action must be a function");
     const name = propertyKey.toString();
     const actions = getMetadata(target, "actions", "service") || {};
     actions[name] = Object.assign({}, { handler, name, visibility: "public" }, options);
@@ -2704,7 +2704,7 @@ var import_assert2 = __toESM(require_assert(), 1);
 function Event(options) {
   return (target, propertyKey, descriptor) => {
     const handler = descriptor.value;
-    (0, import_assert2.default)(!handler || typeof handler !== "function", "An event handler must be a function");
+    (0, import_assert2.default)(handler && typeof handler === "function", "An event handler must be a function");
     const name = propertyKey.toString();
     const events = getMetadata(target, "events", "service") || {};
     events[name] = Object.assign({}, { handler, name }, options);
@@ -2719,7 +2719,7 @@ function createLifeCycleEvent(name) {
   return (target, _propertyKey, descriptor) => {
     const handler = descriptor.value;
     (0, import_assert2.default)(
-      !handler || typeof handler !== "function",
+      handler && typeof handler === "function",
       "An lifecycle event handler must be a function"
     );
     setMetadata(target, name, handler, "service");
@@ -2734,7 +2734,7 @@ var Stopped = createLifeCycleEvent("stopped");
 var import_assert3 = __toESM(require_assert(), 1);
 var MoleculerMethod = (target, propertyKey, descriptor) => {
   const handler = descriptor.value;
-  (0, import_assert3.default)(!handler || typeof handler !== "function", "A method must be a function");
+  (0, import_assert3.default)(handler && typeof handler === "function", "A method must be a function");
   const name = propertyKey.toString();
   const methods = getMetadata(target, "methods", "service") || {};
   methods[name] = Object.assign({}, { handler });
