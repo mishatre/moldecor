@@ -10,10 +10,10 @@ import { getMetadata, getMetadataObject, isServiceClass, setMetadata } from '../
 
 /* -------------------------------------------- types ------------------------------------------- */
 
-export interface ServiceOptions<S> {
+export interface ServiceOptions<S extends ServiceSettingSchema> {
     name?: string;
     version?: string | number;
-    settings?: S & ServiceSettingSchema;
+    settings?: S;
     dependencies?: ServiceSchema['dependencies'];
     metadata?: any;
     mixins?: Array<Partial<ServiceSchema> | ServiceConstructor>;
@@ -62,7 +62,7 @@ function initializeSchema(
         },
         options,
         getMetadataObject(constructor.prototype, 'service'),
-    );
+    ) as ServiceSchema;
 
     // convert mixins
     schema.mixins = convertServiceMixins(schema);
@@ -71,7 +71,7 @@ function initializeSchema(
     return schema;
 }
 
-export function Service<T extends ServiceConstructor, S extends InstanceGenericType<T>>(
+export function Service<T extends ServiceConstructor, S extends ServiceSettingSchema>(
     options: ServiceOptions<S> = {},
 ) {
     return (constructor: T): T => {

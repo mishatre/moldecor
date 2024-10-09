@@ -1,53 +1,31 @@
-import { ActionSchema } from 'moleculer';
-import { Context } from 'moleculer';
-import { EventSchema } from 'moleculer';
-import { Service as Service_2 } from 'moleculer';
-import { ServiceHooks } from 'moleculer';
-import { ServiceSchema } from 'moleculer';
-import { ServiceSettingSchema } from 'moleculer';
+import type { ActionSchema } from 'moleculer';
+import type { EventSchema } from 'moleculer';
+import type { ServiceHooks } from 'moleculer';
+import type { ServiceSettingSchema } from 'moleculer';
 
-export declare function Action<P = {}, T = (ctx: Context<P>) => void>(options?: ActionOptions): MethodDecorator_2<T>;
+export declare function action<P extends ActionSchema, S, T extends (this: S, ...args: any[]) => any = (this: S, ...args: any[]) => any>(params: P): (handler: T, context: ClassMethodDecoratorContext<S, T>) => void;
 
-declare type ActionOptions = PartialRequired<Exclude<ActionSchema, 'handler'>, 'name'>;
+export declare function created<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
 
-export declare function Channel(options?: ChanneltOptions): MethodDecorator;
+declare function event_2<P extends EventSchema, S, T extends (this: S, ...args: any[]) => any = (this: S, ...args: any[]) => any>(params: P): (handler: T, context: ClassMethodDecoratorContext<S, T>) => void;
+export { event_2 as event }
 
-declare type ChanneltOptions = Partial<Exclude<any, 'handler'>> & {
-    name: string;
-};
+export declare function method<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
 
-export declare const Created: MethodDecorator;
+export declare function service<S extends Record<string, any>, T extends new (...rest: any[]) => any>(options: ServiceOptions<S>): (target: T, context: ClassDecoratorContext<T>) => T;
 
-declare function Event_2(options?: EventSchema): MethodDecorator;
-export { Event_2 as Event }
-
-declare type InstanceGenericType<T extends abstract new (...args: any) => Service_2<any>> = T extends abstract new (...args: any) => Service_2<infer R> ? R : any;
-
-export declare const Method: MethodDecorator;
-
-declare type MethodDecorator_2<T> = (target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) => TypedPropertyDescriptor<T> | void;
-
-declare type PartialRequired<T, K extends keyof T> = Partial<T> & Pick<Required<T>, K>;
-
-export declare function Service<T extends ServiceConstructor, S extends InstanceGenericType<T>>(options?: ServiceOptions<S>): (constructor: T) => T;
-
-declare interface ServiceConstructor {
-    new (...args: any[]): Service_2;
-}
-
-declare interface ServiceOptions<S> {
+declare interface ServiceOptions<S extends Record<string, any>> {
     name?: string;
     version?: string | number;
     settings?: S & ServiceSettingSchema;
-    dependencies?: ServiceSchema['dependencies'];
-    metadata?: any;
-    mixins?: Array<Partial<ServiceSchema> | ServiceConstructor>;
+    dependencies?: string[];
+    metadata?: Record<string, any>;
+    mixins?: any[];
     hooks?: ServiceHooks;
-    [name: string]: any;
 }
 
-export declare const Started: MethodDecorator;
+export declare function started<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
 
-export declare const Stopped: MethodDecorator;
+export declare function stopped<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
 
 export { }

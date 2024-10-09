@@ -39,5 +39,18 @@ export function deepClone<T extends any>(obj: T): T {
 }
 
 export function isServiceClass(constructor: unknown): constructor is ServiceConstructor {
-    return typeof constructor === 'function' && Service.isPrototypeOf(constructor);
+    if (typeof constructor !== 'function') {
+        return false;
+    }
+
+    if (Service.isPrototypeOf(constructor)) {
+        return true;
+    }
+
+    // Fallback in case of multiple moleculer package instances
+    if ('parseServiceSchema' in constructor.prototype) {
+        return true;
+    }
+
+    return false;
 }

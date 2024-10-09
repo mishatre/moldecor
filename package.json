@@ -16,9 +16,10 @@
     ],
     "type": "module",
     "scripts": {
+        "test": "pnpx tsx ./src/test/service.ts",
         "build:clean": "rm -rf ./dist",
-        "build:esm": "esbuild ./src/index.ts --bundle --target=es2019 --format=esm --sourcemap --external:moleculer --outfile=dist/esm/index.mjs",
-        "build:cjs": "esbuild ./src/index.ts --bundle --target=es2019 --format=cjs --sourcemap --external:moleculer --outfile=dist/cjs/index.cjs",
+        "build:esm": "esbuild ./src/index.ts --bundle --platform=node --target=es2019 --format=esm --sourcemap --external:moleculer --outfile=dist/esm/index.mjs",
+        "build:cjs": "esbuild ./src/index.ts --bundle --platform=node --target=es2019 --format=cjs --sourcemap --external:moleculer --outfile=dist/cjs/index.cjs",
         "build:types": "tsc && pnpx @microsoft/api-extractor run --local",
         "build": "pnpm run build:clean && pnpm run build:types && pnpm run build:esm && pnpm run build:cjs"
     },
@@ -28,16 +29,19 @@
     "devDependencies": {
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
         "@types/node": "^20.12.7",
-        "esbuild": "^0.20.2",
+        "esbuild": "^0.24.0",
         "typescript": "^5.4.5"
     },
     "dependencies": {
         "reflect-metadata": "^0.2.2"
     },
     "peerDependencies": {
-        "moleculer": "~0.14.x"
+        "moleculer": "~0.15.0-beta1"
     },
     "engines": {
         "node": ">=16"
+    },
+    "optionalDependencies": {
+        "moleculer-gateway": "link:../moleculer-gateway"
     }
 }
