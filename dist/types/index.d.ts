@@ -22,6 +22,7 @@ declare interface ServiceOptions<S extends Record<string, any>> {
     metadata?: Record<string, any>;
     mixins?: any[];
     hooks?: ServiceHooks;
+    [key: string]: any;
 }
 
 export declare function started<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;

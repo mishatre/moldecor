@@ -29,6 +29,7 @@ export interface ServiceOptions<
     metadata?: Record<string, any>;
     mixins?: any[];
     hooks?: ServiceHooks;
+    [key: string]: any;
 }
 
 const decoratedService = Symbol('decoratedService');
