@@ -39,7 +39,7 @@ function action(params) {
       context.kind === "method",
       "Action decorator can be used only as class method decorator"
     );
-    dset(context.metadata, `actions.${params.name || String(context.name)}`, {
+    dset(context.metadata, ["actions", params.name || String(context.name)], {
       ...params,
       name: params.name || String(context.name),
       handler
