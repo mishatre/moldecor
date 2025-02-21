@@ -94,7 +94,7 @@ function event(params) {
       context.kind === "method",
       "Event decorator can be used only as class method decorator"
     );
-    dset(context.metadata, `events.${params.name || String(context.name)}`, {
+    dset(context.metadata, ["events", params.name || String(context.name)], {
       ...params,
       name: params.name || String(context.name),
       handler
