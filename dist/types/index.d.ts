@@ -12,7 +12,7 @@ export { event_2 as event }
 
 export declare function method<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
 
-export declare function service<S extends Record<string, any>, T extends new (...rest: any[]) => any>(options: ServiceOptions<S>): (target: T, context: ClassDecoratorContext<T>) => T;
+export declare function service<S extends Record<string, any>, T extends new (...rest: any[]) => any>({ actions, ...options }: ServiceOptions<S>): (target: T, context: ClassDecoratorContext<T>) => T;
 
 declare interface ServiceOptions<S extends Record<string, any>> {
     name?: string;

@@ -38,7 +38,7 @@ export function service<
     S extends Record<string, any>,
     T extends new (...rest: any[]) => any,
     // M extends any[],
->(options: ServiceOptions<S>) {
+>({ actions, ...options }: ServiceOptions<S>) {
     return function (target: T, context: ClassDecoratorContext<T>) {
         assert(context.kind === 'class', 'Service decorator can be used only as class decorator');
 
@@ -49,6 +49,10 @@ export function service<
                 this.parseServiceSchema(context.metadata);
             }
         };
+
+        if (!!actions) {
+            context.metadata.actions = Object.assign({}, context.metadata.actions, actions);
+        }
 
         Object.assign(context.metadata, options, context.metadata);
         Object.assign(target, { [decoratedService]: context.metadata });

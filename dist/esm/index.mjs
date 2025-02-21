@@ -14,7 +14,7 @@ function dset(obj, keys, val) {
 
 // src/service_next/service.ts
 var decoratedService = Symbol("decoratedService");
-function service(options) {
+function service({ actions, ...options }) {
   return function(target, context) {
     var _a;
     assert(context.kind === "class", "Service decorator can be used only as class decorator");
@@ -25,6 +25,9 @@ function service(options) {
         this.parseServiceSchema(context.metadata);
       }
     };
+    if (!!actions) {
+      context.metadata.actions = Object.assign({}, context.metadata.actions, actions);
+    }
     Object.assign(context.metadata, options, context.metadata);
     Object.assign(target, { [decoratedService]: context.metadata });
     context.metadata.mixins = (_a = context.metadata.mixins) == null ? void 0 : _a.map(
