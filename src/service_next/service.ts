@@ -157,3 +157,33 @@ export function stopped<
     );
     dset(context.metadata, 'stopped', handler);
 }
+
+export function merged<
+    S,
+    T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any,
+>(handler: T, context: ClassMethodDecoratorContext<S, T>) {
+    assert(
+        context.kind === 'method',
+        'Merged decorator can be used only as class method decorator',
+    );
+    assert(
+        context.name === 'merged',
+        'Merged decorator should be used only with "merged" class method',
+    );
+    dset(context.metadata, 'merged', handler);
+}
+
+export function lifecycle<
+    S,
+    T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any,
+>(handler: T, context: ClassMethodDecoratorContext<S, T>) {
+    assert(
+        context.kind === 'method',
+        'Lifecycle decorator can be used only as class method decorator',
+    );
+    assert(
+        ['created', 'merged', 'started', 'stopped'].includes(context.name as string) === false,
+        'Lifecycle decorator cannot be used as substitute for "created", "merged", "started", "stopped" decorators',
+    );
+    dset(context.metadata, context.name as string, handler);
+}

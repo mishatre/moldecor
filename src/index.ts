@@ -13,4 +13,6 @@ export {
     method,
     started,
     stopped,
+    merged,
+    lifecycle,
 } from './service_next/service.js';

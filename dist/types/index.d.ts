@@ -10,6 +10,10 @@ export declare function created<S, T extends (this: S, ...args: any) => any = (t
 declare function event_2<P extends EventSchema, S, T extends (this: S, ...args: any[]) => any = (this: S, ...args: any[]) => any>(params: P): (handler: T, context: ClassMethodDecoratorContext<S, T>) => void;
 export { event_2 as event }
 
+export declare function lifecycle<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
+
+export declare function merged<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
+
 export declare function method<S, T extends (this: S, ...args: any) => any = (this: S, ...args: any) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
 
 export declare function service<S extends Record<string, any>, T extends new (...rest: any[]) => any>({ actions, ...options }: ServiceOptions<S>): (target: T, context: ClassDecoratorContext<T>) => T;
