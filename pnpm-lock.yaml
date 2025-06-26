@@ -8,20 +8,22 @@ importers:
 
   .:
     dependencies:
+      lodash.defaultsdeep:
+        specifier: ^4.6.1
+        version: 4.6.1
       moleculer:
-        specifier: ~0.14.x
+        specifier: ~0.15.0-beta1
         version: 0.15.0-beta1(debug@4.3.4)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
-    optionalDependencies:
-      moleculer-gateway:
-        specifier: link:../moleculer-gateway
-        version: link:../moleculer-gateway
     devDependencies:
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^4.3.0
         version: 4.3.0(prettier@3.2.5)
+      '@types/lodash.defaultsdeep':
+        specifier: ^4.6.9
+        version: 4.6.9
       '@types/node':
         specifier: ^20.12.7
         version: 20.12.7
@@ -31,6 +33,10 @@ importers:
       typescript:
         specifier: ^5.4.5
         version: 5.4.5
+    optionalDependencies:
+      moleculer-gateway:
+        specifier: link:../moleculer-gateway
+        version: link:../moleculer-gateway
 
 packages:
 
@@ -274,6 +280,12 @@ packages:
       '@vue/compiler-sfc':
         optional: true
 
+  '@types/lodash.defaultsdeep@4.6.9':
+    resolution: {integrity: sha512-pLtCFK0YkHfGtGLYLNMTbFB5/G5+RsmQCIbbHH8GOAXjv+gDkVilY98kILfe8JH2Kev0OCReYxp1AjxEjP8ixA==}
+
+  '@types/lodash@4.17.19':
+    resolution: {integrity: sha512-NYqRyg/hIQrYPT9lbOeYc3kIRabJDn/k4qQHIXUpx88CBDww2fD15Sg5kbXlW86zm2XEW4g0QxkTI3/Kfkc7xQ==}
+
   '@types/node@20.12.7':
     resolution: {integrity: sha512-wq0cICSkRLVaf3UGLMGItu/PtdY7oaXaI/RVU+xliKVOtRna3PRY57ZDfztpDL0n11vfymMUnXv8QwYCO7L1wg==}
 
@@ -413,6 +425,9 @@ packages:
   leven@2.1.0:
     resolution: {integrity: sha512-nvVPLpIHUxCUoRLrFqTgSxXJ614d8AgQoWl7zPe/2VadE8+1dpU3LBhowRuBAcuwruWtOdD8oYC9jDNJjXDPyA==}
     engines: {node: '>=0.10.0'}
+
+  lodash.defaultsdeep@4.6.1:
+    resolution: {integrity: sha512-3j8wdDzYuWO3lM3Reg03MuQR957t287Rpcxp1njpEa8oDrikb+FwGdW3n+FELh/A6qib6yPit0j/pv9G/yeAqA==}
 
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
@@ -781,6 +796,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@types/lodash.defaultsdeep@4.6.9':
+    dependencies:
+      '@types/lodash': 4.17.19
+
+  '@types/lodash@4.17.19': {}
+
   '@types/node@20.12.7':
     dependencies:
       undici-types: 5.26.5
@@ -920,6 +941,8 @@ snapshots:
   kleur@4.1.5: {}
 
   leven@2.1.0: {}
+
+  lodash.defaultsdeep@4.6.1: {}
 
   lodash@4.17.21: {}
 

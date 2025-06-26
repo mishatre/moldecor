@@ -1,6 +1,6 @@
 {
     "name": "moldecor",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "",
     "exports": {
         "types": "./dist/types/index.d.ts",
@@ -28,11 +28,13 @@
     "license": "MIT",
     "devDependencies": {
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+        "@types/lodash.defaultsdeep": "^4.6.9",
         "@types/node": "^20.12.7",
         "esbuild": "^0.24.0",
         "typescript": "^5.4.5"
     },
     "dependencies": {
+        "lodash.defaultsdeep": "^4.6.1",
         "reflect-metadata": "^0.2.2"
     },
     "peerDependencies": {

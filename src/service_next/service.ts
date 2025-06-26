@@ -10,6 +10,7 @@ import { Service } from 'moleculer';
 import assert from 'node:assert';
 
 import { dset } from './dset.js';
+import { mergeSchemas } from '../utils/schema.js';
 
 type MergeTypes<T extends unknown[], K extends keyof T[0]> = T extends [
     a: infer A,
@@ -50,17 +51,15 @@ export function service<
             }
         };
 
-        if (!!actions) {
-            context.metadata.actions = Object.assign({}, context.metadata.actions, actions);
-        }
+        mergeSchemas(context.metadata, options);
 
-        Object.assign(context.metadata, options, context.metadata);
         Object.assign(target, { [decoratedService]: context.metadata });
-        context.metadata.mixins = (context.metadata as unknown as ServiceSchema).mixins?.map(
-            (mixin) => (decoratedService in mixin ? mixin[decoratedService] : mixin),
-        );
-
-        // target.started = context.metadata.started;
+        if ('mixins' in context.metadata && Array.isArray(context.metadata)) {
+            const mixins = context.metadata.mixins as Partial<ServiceSchema>[];
+            context.metadata.mixins = mixins.map(
+                (mixin) => (decoratedService in mixin ? mixin[decoratedService] : mixin),
+            )
+        }
 
         return target;
     };
@@ -76,9 +75,10 @@ export function action<
             context.kind === 'method',
             'Action decorator can be used only as class method decorator',
         );
-        dset(context.metadata, ['actions', params.name || String(context.name)], {
+        const name = params.name || String(context.name);
+        dset(context.metadata, ['actions', name], {
             ...params,
-            name: params.name || String(context.name),
+            name,
             handler,
         });
     };
@@ -94,9 +94,10 @@ export function event<
             context.kind === 'method',
             'Event decorator can be used only as class method decorator',
         );
-        dset(context.metadata, ['events', params.name || String(context.name)], {
+        const name = params.name || String(context.name);
+        dset(context.metadata, ['events', name], {
             ...params,
-            name: params.name || String(context.name),
+            name,
             handler,
         });
     };
