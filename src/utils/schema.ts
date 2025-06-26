@@ -8,37 +8,36 @@ export function mergeSchemas(target: Partial<ServiceSchema>, sourceSchema: Parti
     assert(!!target, 'Target schema must be provided');
     assert(!!sourceSchema, 'Source schema must be provided');
 
-    const source = deepClone(sourceSchema);
-    for (const key of Object.keys(target) as (keyof typeof target)[]) {
-        if ((key === "name" || key === "version") && source[key] !== undefined) {
+    for (const key of Object.keys(sourceSchema) as (keyof typeof sourceSchema)[]) {
+        if ((key === "name" || key === "version") && sourceSchema[key] !== undefined) {
             // Simple overwrite
-            target[key] = source[key] as keyof typeof source;
+            target[key] = sourceSchema[key] as keyof typeof sourceSchema;
         } else if (key === "settings") {
             // Merge with defaultsDeep
-            target[key] = mergeSchemaSettings(source[key], target[key]);
+            target[key] = mergeSchemaSettings(sourceSchema[key], target[key]);
         } else if (key === "metadata") {
             // Merge with defaultsDeep
-            target[key] = mergeSchemaMetadata(source[key], target[key]);
+            target[key] = mergeSchemaMetadata(sourceSchema[key], target[key]);
         } else if (key === "hooks") {
             // Merge & concat
-            target[key] = mergeSchemaHooks(source[key], target[key] || {});
+            target[key] = mergeSchemaHooks(sourceSchema[key], target[key] || {});
         } else if (key === "actions") {
             // Merge with defaultsDeep
-            target[key] = mergeSchemaActions(source[key], target[key] || {});
+            target[key] = mergeSchemaActions(sourceSchema[key], target[key] || {});
         } else if (key === "methods") {
             // Overwrite
-            target[key] = mergeSchemaMethods(source[key], target[key]);
+            target[key] = mergeSchemaMethods(sourceSchema[key], target[key]);
         } else if (key === "events") {
             // Merge & concat by groups
-            target[key] = mergeSchemaEvents(source[key], target[key] || {});
+            target[key] = mergeSchemaEvents(sourceSchema[key], target[key] || {});
         } else if (["merged", "created", "started", "stopped"].includes(key)) {
             // Concat lifecycle event handlers
-            target[key] = mergeSchemaLifecycleHandlers(source[key as keyof typeof source], target[key as keyof typeof target]) as any;
+            target[key] = mergeSchemaLifecycleHandlers(sourceSchema[key as keyof typeof sourceSchema], target[key as keyof typeof target]) as any;
         } else if (["dependencies", "mixins"].includes(key)) {
             // Concat mixins
-            target[key] = mergeSchemaUniqArray(source[key], target[key]) as any;
+            target[key] = mergeSchemaUniqArray(sourceSchema[key], target[key]) as any;
         } else {
-            target[key] = mergeSchemaUnknown(source[key], target[key]) as any;
+            target[key] = mergeSchemaUnknown(sourceSchema[key], target[key]) as any;
         }
     }
 

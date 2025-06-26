@@ -795,30 +795,6 @@ function dset(obj, keys, val) {
 
 // src/utils/helpers.ts
 var import_moleculer = require("moleculer");
-function deepClone(obj) {
-  if (obj === null || typeof obj !== "object") {
-    return obj;
-  }
-  if (obj instanceof Date) {
-    return new Date(obj.getTime());
-  }
-  if (obj instanceof Set) {
-    const clonedSet = /* @__PURE__ */ new Set();
-    obj.forEach((value) => clonedSet.add(deepClone(value)));
-    return clonedSet;
-  }
-  if (obj instanceof Map) {
-    const clonedMap = /* @__PURE__ */ new Map();
-    obj.forEach((value, key) => clonedMap.set(key, deepClone(value)));
-    return clonedMap;
-  }
-  if (obj instanceof RegExp) {
-    return new RegExp(obj.source, obj.flags);
-  }
-  const clone = Array.isArray(obj) ? [] : {};
-  Object.entries(obj).forEach(([key, value]) => clone[key] = deepClone(value));
-  return clone;
-}
 function uniqueArray(array) {
   return [...new Set(array)];
 }
@@ -842,28 +818,27 @@ var import_lodash = __toESM(require_lodash(), 1);
 function mergeSchemas(target, sourceSchema) {
   (0, import_node_assert.default)(!!target, "Target schema must be provided");
   (0, import_node_assert.default)(!!sourceSchema, "Source schema must be provided");
-  const source = deepClone(sourceSchema);
-  for (const key of Object.keys(target)) {
-    if ((key === "name" || key === "version") && source[key] !== void 0) {
-      target[key] = source[key];
+  for (const key of Object.keys(sourceSchema)) {
+    if ((key === "name" || key === "version") && sourceSchema[key] !== void 0) {
+      target[key] = sourceSchema[key];
     } else if (key === "settings") {
-      target[key] = mergeSchemaSettings(source[key], target[key]);
+      target[key] = mergeSchemaSettings(sourceSchema[key], target[key]);
     } else if (key === "metadata") {
-      target[key] = mergeSchemaMetadata(source[key], target[key]);
+      target[key] = mergeSchemaMetadata(sourceSchema[key], target[key]);
     } else if (key === "hooks") {
-      target[key] = mergeSchemaHooks(source[key], target[key] || {});
+      target[key] = mergeSchemaHooks(sourceSchema[key], target[key] || {});
     } else if (key === "actions") {
-      target[key] = mergeSchemaActions(source[key], target[key] || {});
+      target[key] = mergeSchemaActions(sourceSchema[key], target[key] || {});
     } else if (key === "methods") {
-      target[key] = mergeSchemaMethods(source[key], target[key]);
+      target[key] = mergeSchemaMethods(sourceSchema[key], target[key]);
     } else if (key === "events") {
-      target[key] = mergeSchemaEvents(source[key], target[key] || {});
+      target[key] = mergeSchemaEvents(sourceSchema[key], target[key] || {});
     } else if (["merged", "created", "started", "stopped"].includes(key)) {
-      target[key] = mergeSchemaLifecycleHandlers(source[key], target[key]);
+      target[key] = mergeSchemaLifecycleHandlers(sourceSchema[key], target[key]);
     } else if (["dependencies", "mixins"].includes(key)) {
-      target[key] = mergeSchemaUniqArray(source[key], target[key]);
+      target[key] = mergeSchemaUniqArray(sourceSchema[key], target[key]);
     } else {
-      target[key] = mergeSchemaUnknown(source[key], target[key]);
+      target[key] = mergeSchemaUnknown(sourceSchema[key], target[key]);
     }
   }
 }
