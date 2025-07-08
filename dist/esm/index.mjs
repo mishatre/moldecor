@@ -917,35 +917,61 @@ function mergeSchemaUnknown(src, target) {
 }
 
 // src/service_next/service.ts
+var decoratedFields = Symbol("decoratedFields");
 var decoratedService = Symbol("decoratedService");
-function service({ actions, ...options }) {
+function service(options) {
   return function(target, context) {
     assert2(context.kind === "class", "Service decorator can be used only as class decorator");
     target = class extends target {
-      constructor(...args) {
-        const [broker] = args;
-        super(broker);
+      constructor(broker, schema) {
+        super(broker, schema);
         this.parseServiceSchema(context.metadata);
       }
     };
-    mergeSchemas(context.metadata, options);
-    Object.assign(target, { [decoratedService]: context.metadata });
-    if ("mixins" in context.metadata && Array.isArray(context.metadata)) {
-      const mixins = context.metadata.mixins;
-      context.metadata.mixins = mixins.map(
+    const metadata = context.metadata;
+    mergeSchemas(metadata, options);
+    target[decoratedService] = metadata;
+    if ("mixins" in metadata && Array.isArray(metadata.mixins)) {
+      metadata.mixins = metadata.mixins.map(
         (mixin) => decoratedService in mixin ? mixin[decoratedService] : mixin
       );
+    }
+    if (decoratedFields in metadata && metadata[decoratedFields]) {
+      const merged2 = function(schema) {
+        if (decoratedFields in metadata && metadata[decoratedFields]) {
+          for (const [key, value] of Object.entries(metadata[decoratedFields])) {
+            if (!(key in this)) {
+              this[key] = value;
+            }
+          }
+        }
+      };
+      if ("merged" in metadata) {
+        if (Array.isArray(metadata.merged)) {
+          metadata.merged.push(merged2);
+        } else {
+          metadata.merged = [metadata.merged, merged2];
+        }
+      } else {
+        Object.assign(metadata, { merged: [merged2] });
+      }
     }
     return target;
   };
 }
 function action(params) {
   return function(handler, context) {
+    var _a, _b;
     assert2(
       context.kind === "method",
       "Action decorator can be used only as class method decorator"
     );
-    const name = params.name || String(context.name);
+    assert2(
+      typeof handler === "function",
+      `@action/${String(context.name)} must be a function`
+    );
+    const name = (params == null ? void 0 : params.name) || String(context.name);
+    (_b = (_a = context.metadata).actions) != null ? _b : _a.actions = {};
     dset(context.metadata, ["actions", name], {
       ...params,
       name,
@@ -955,11 +981,17 @@ function action(params) {
 }
 function event(params) {
   return function(handler, context) {
+    var _a, _b;
     assert2(
       context.kind === "method",
       "Event decorator can be used only as class method decorator"
     );
+    assert2(
+      typeof handler === "function",
+      `@event/${String(context.name)} must be a function`
+    );
     const name = params.name || String(context.name);
+    (_b = (_a = context.metadata).events) != null ? _b : _a.events = {};
     dset(context.metadata, ["events", name], {
       ...params,
       name,
@@ -968,11 +1000,17 @@ function event(params) {
   };
 }
 function method(handler, context) {
+  var _a, _b;
   assert2(
     context.kind === "method",
     "Method decorator can be used only as class method decorator"
   );
-  dset(context.metadata, `methods.${String(context.name)}`, handler);
+  assert2(
+    typeof handler === "function",
+    `@method/${String(context.name)} must be a function`
+  );
+  (_b = (_a = context.metadata).methods) != null ? _b : _a.methods = {};
+  dset(context.metadata, ["methods", String(context.name)], handler);
 }
 function created(handler, context) {
   assert2(
@@ -1032,6 +1070,7 @@ function lifecycle(handler, context) {
 export {
   action,
   created,
+  dset,
   event,
   lifecycle,
   merged,

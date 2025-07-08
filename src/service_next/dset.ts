@@ -1,7 +1,7 @@
 // @ts-nocheck
 export function dset<T extends object, V>(
     obj: T,
-    keys: string | ArrayLike<string | number>,
+    keys: string | symbol | ArrayLike<string | symbol | number>,
     val: V,
 ) {
     keys.split && (keys = keys.split('.'));
