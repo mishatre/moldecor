@@ -30,13 +30,13 @@ const decoratedService = Symbol('decoratedService');
 
 export function service<
     S extends Record<string, any>,
-    T extends new (broker: ServiceBroker, schema?: Partial<ServiceSchema<S>>) => any,
+    T extends new (broker: ServiceBroker, schema?: ServiceSchema<S>) => any,
 >(options: ServiceOptions<S>) {
     return function (target: T & { [decoratedService]?: Partial<ServiceSchema>;}, context: ClassDecoratorContext<T>) {
         assert(context.kind === 'class', 'Service decorator can be used only as class decorator');
 
         target = class extends target {
-            constructor(broker: ServiceBroker, schema?: Partial<ServiceSchema<S>>) {
+            constructor(broker: ServiceBroker, schema?: ServiceSchema<S>) {
                 super(broker, schema);
                 this.parseServiceSchema(context.metadata);
             }

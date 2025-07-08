@@ -43,9 +43,12 @@ type WithMixins = T & T0;
 
 @service({
     name: 't',
-    mixins: [T0, T1]
+    mixins: [T0, T1],
+    settings: {
+        a: 1,
+    }
 })
-class T extends MoleculerService {
+class T extends MoleculerService<{ a: number }> {
 
     @action({})
     public async actionHandler(this: WithMixins, ctx: Context) {

@@ -23,7 +23,7 @@ export declare function merged<S, T extends (...args: any) => any>(handler: T, c
 
 export declare function method<S, T extends (...args: any[]) => any>(handler: T, context: ClassMethodDecoratorContext<S, T>): void;
 
-export declare function service<S extends Record<string, any>, T extends new (broker: ServiceBroker, schema?: Partial<ServiceSchema<S>>) => any>(options: ServiceOptions<S>): (target: T & {
+export declare function service<S extends Record<string, any>, T extends new (broker: ServiceBroker, schema?: ServiceSchema<S>) => any>(options: ServiceOptions<S>): (target: T & {
     [decoratedService]?: Partial<ServiceSchema>;
 }, context: ClassDecoratorContext<T>) => T & {
     [decoratedService]?: Partial<Service.ServiceSchema<Service.ServiceSettingSchema>> | undefined;
