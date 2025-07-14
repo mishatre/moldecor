@@ -18,7 +18,7 @@ export interface ServiceOptions<
     name?: string;
     version?: string | number;
     settings?: S & ServiceSettingSchema;
-    dependencies?: string[];
+    dependencies?: ServiceSchema['dependencies'];
     metadata?: Record<string, any>;
     mixins?: any[];
     hooks?: ServiceHooks;

@@ -33,7 +33,7 @@ declare interface ServiceOptions<S extends Record<string, any>> {
     name?: string;
     version?: string | number;
     settings?: S & ServiceSettingSchema;
-    dependencies?: string[];
+    dependencies?: ServiceSchema['dependencies'];
     metadata?: Record<string, any>;
     mixins?: any[];
     hooks?: ServiceHooks;
