@@ -112,7 +112,11 @@ function mergeSchemaActions(src: ServiceSchema['actions'], target: ServiceSchema
                 };
             }
 
-            target[key] = defaultsDeep(srcAction, targetAction);
+            if (srcAction === false) {
+                target[key] = false;
+            } else {
+                target[key] = defaultsDeep(srcAction, targetAction);
+            }
         }
     };
 

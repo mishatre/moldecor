@@ -878,7 +878,11 @@ function mergeSchemaActions(src, target) {
         }
         ;
       }
-      target[key] = (0, import_lodash.default)(srcAction, targetAction);
+      if (srcAction === false) {
+        target[key] = false;
+      } else {
+        target[key] = (0, import_lodash.default)(srcAction, targetAction);
+      }
     }
   }
   ;
