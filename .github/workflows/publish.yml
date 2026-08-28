@@ -1,0 +1,43 @@
+name: Publish
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        environment: npm
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - name: Validate release tag
+              env:
+                  RELEASE_TAG: ${{ github.ref_name }}
+              run: |
+                  node --input-type=module -e '
+                    import packageJson from "./package.json" with { type: "json" };
+                    const expected = `v${packageJson.version}`;
+                    if (process.env.RELEASE_TAG !== expected) {
+                      throw new Error(`Release tag ${process.env.RELEASE_TAG} must equal ${expected}.`);
+                    }
+                    if (packageJson.version.includes("-")) {
+                      throw new Error("Prereleases must be published manually under the next tag.");
+                    }
+                  '
+            - run: pnpm run check
+            - name: Verify committed distribution
+              run: git diff --exit-code -- dist
+            - name: Use an npm version with trusted publishing support
+              run: npm install --global npm@11.6.2
+            - run: npm publish --access public --provenance

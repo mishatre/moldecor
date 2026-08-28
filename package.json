@@ -1,49 +1,81 @@
 {
     "name": "moldecor",
-    "version": "1.1.2",
-    "description": "",
-    "exports": {
-        "types": "./dist/types/index.d.ts",
-        "require": "./dist/cjs/index.cjs",
-        "import": "./dist/esm/index.mjs",
-        "default": "./dist/esm/index.mjs"
-    },
-    "typings": "./dist/types/index.d.ts",
-    "types": "./dist/types/index.d.ts",
-    "files": [
-        "src",
-        "dist"
+    "version": "2.0.0-rc.0",
+    "description": "Type-safe standard decorators for Moleculer services and mixins",
+    "keywords": [
+        "moleculer",
+        "decorators",
+        "typescript",
+        "microservices",
+        "mixins"
     ],
-    "type": "module",
-    "scripts": {
-        "test": "pnpx tsx ./src/test/service.ts",
-        "build:clean": "rm -rf ./dist",
-        "build:esm": "esbuild ./src/index.ts --bundle --platform=node --target=es2019 --format=esm --sourcemap --external:moleculer --outfile=dist/esm/index.mjs",
-        "build:cjs": "esbuild ./src/index.ts --bundle --platform=node --target=es2019 --format=cjs --sourcemap --external:moleculer --outfile=dist/cjs/index.cjs",
-        "build:types": "tsc && pnpx @microsoft/api-extractor run --local",
-        "build": "pnpm run build:clean && pnpm run build:types && pnpm run build:esm && pnpm run build:cjs"
-    },
-    "keywords": [],
-    "author": "",
+    "author": "Mikhail Tregub",
     "license": "MIT",
-    "devDependencies": {
-        "@trivago/prettier-plugin-sort-imports": "^4.3.0",
-        "@types/lodash.defaultsdeep": "^4.6.9",
-        "@types/node": "^20.12.7",
-        "esbuild": "^0.24.0",
-        "typescript": "^5.4.5"
+    "homepage": "https://github.com/mishatre/moldecor#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/mishatre/moldecor.git"
     },
-    "dependencies": {
-        "lodash.defaultsdeep": "^4.6.1",
-        "reflect-metadata": "^0.2.2"
+    "bugs": {
+        "url": "https://github.com/mishatre/moldecor/issues"
     },
-    "peerDependencies": {
-        "moleculer": "~0.15.0-beta1"
+    "type": "module",
+    "sideEffects": [
+        "./dist/index.mjs",
+        "./dist/index.cjs"
+    ],
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.mts",
+                "default": "./dist/index.mjs"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
+        }
+    },
+    "files": [
+        "dist",
+        "CHANGELOG.md",
+        "LICENSE",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsdown",
+        "format": "biome check --write .",
+        "format:check": "biome format .",
+        "lint": "biome lint .",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "coverage": "vitest run --coverage",
+        "check:package": "publint && node scripts/check-types.mjs && node scripts/check-package.mjs",
+        "check": "biome ci . && pnpm run typecheck && pnpm run coverage && pnpm run build && pnpm run check:package",
+        "prepack": "pnpm run build"
     },
     "engines": {
-        "node": ">=16"
+        "node": ">=22"
     },
-    "optionalDependencies": {
-        "moleculer-gateway": "link:../moleculer-gateway"
+    "packageManager": "pnpm@11.22.0",
+    "publishConfig": {
+        "access": "public"
+    },
+    "peerDependencies": {
+        "moleculer": "^0.14.35 || ^0.15.0"
+    },
+    "devDependencies": {
+        "@arethetypeswrong/cli": "^0.18.5",
+        "@biomejs/biome": "2.5.10",
+        "@types/node": "^22.20.1",
+        "@vitest/coverage-v8": "^4.1.11",
+        "moleculer": "0.15.1",
+        "publint": "^0.3.24",
+        "tsdown": "^0.22.14",
+        "typescript": "5.9.3",
+        "vitest": "^4.1.11"
     }
 }

@@ -1,13 +1,19 @@
-
+export type {
+    ActionOptions,
+    EventOptions,
+    ServiceMixin,
+    ServiceOptions,
+    ServiceSettings,
+} from './moldecor.js';
 export {
-    service,
     action,
     created,
+    defineSettings,
     event,
+    lifecycle,
+    merged,
     method,
+    service,
     started,
     stopped,
-    merged,
-    lifecycle,
-} from './service_next/service.js';
-export { dset } from './service_next/dset.js';
+} from './moldecor.js';

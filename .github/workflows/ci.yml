@@ -1,0 +1,52 @@
+name: CI
+
+on:
+    push:
+        branches: ['**']
+    pull_request:
+
+permissions:
+    contents: read
+
+jobs:
+    quality:
+        name: Node ${{ matrix.node }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                node: [22, 24, 26]
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node }}
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm run check
+            - name: Verify committed distribution
+              run: git diff --exit-code -- dist
+
+    moleculer:
+        name: Moleculer ${{ matrix.moleculer }} on Node ${{ matrix.node }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                node: [22, 24, 26]
+                moleculer: [0.14.35, 0.15.1]
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node }}
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - name: Select Moleculer version
+              run: pnpm add --save-dev --lockfile=false moleculer@${{ matrix.moleculer }}
+            - run: ./node_modules/.bin/tsdown
+            - run: ./node_modules/.bin/tsc --noEmit
+            - run: ./node_modules/.bin/vitest run
+            - run: node scripts/check-package.mjs

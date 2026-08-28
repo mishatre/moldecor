@@ -1,0 +1,79 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "ignoreUnknown": true,
+        "includes": [
+            "**",
+            "!!coverage",
+            "!!dist",
+            "!!etc",
+            "!!graft",
+            "!!lib",
+            "!!node_modules",
+            "!!temp",
+            "!AGENTS.md",
+            "!pnpm-lock.yaml"
+        ]
+    },
+    "formatter": {
+        "enabled": true,
+        "formatWithErrors": false,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineEnding": "lf",
+        "lineWidth": 100
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "preset": "recommended",
+            "suspicious": {
+                "noAssignInExpressions": "off",
+                "noExplicitAny": "off",
+                "noEmptyBlockStatements": "off"
+            }
+        }
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "bracketSameLine": true,
+            "quoteStyle": "single",
+            "trailingCommas": "all"
+        }
+    },
+    "json": {
+        "formatter": {
+            "indentStyle": "space",
+            "indentWidth": 4,
+            "lineWidth": 100
+        }
+    },
+    "overrides": [
+        {
+            "includes": ["tests/**"],
+            "linter": {
+                "rules": {
+                    "complexity": {
+                        "noStaticOnlyClass": "off"
+                    },
+                    "correctness": {
+                        "noUnusedPrivateClassMembers": "off"
+                    }
+                }
+            }
+        }
+    ]
+}

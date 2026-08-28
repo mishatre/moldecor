@@ -1,12 +1,7 @@
-
 node_modules
-dist/types/tsdoc-metadata.json
-lib
-temp
-etc
-
 .pnpm-store/
-example/
+coverage/
+*.tgz
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 graft/
