@@ -42,7 +42,10 @@ interface DecoratedMembers {
 }
 
 const membersKey = Symbol('moldecor:members');
-const decoratedSchemas = new WeakMap<object, Schema>();
+// Decorated classes routinely cross ESM/CJS, pnpm, and bundler boundaries. A versioned global
+// key keeps the WeakMap private while allowing compatible v2 copies to recognize one another.
+const decoratedSchemasKey = Symbol.for('moldecor:v2:decorated-schemas');
+const decoratedSchemas = getDecoratedSchemas();
 const lifecycleNames = new Set(['created', 'merged', 'started', 'stopped']);
 
 installSymbolMetadata();
@@ -56,6 +59,25 @@ function installSymbolMetadata(): void {
             writable: false,
         });
     }
+}
+
+function getDecoratedSchemas(): WeakMap<object, Schema> {
+    const runtime = globalThis as Record<PropertyKey, unknown>;
+    const existing = runtime[decoratedSchemasKey];
+
+    if (existing !== undefined) {
+        if (existing instanceof WeakMap) return existing as WeakMap<object, Schema>;
+        return fail('The shared decorated-service registry is invalid.');
+    }
+
+    const registry = new WeakMap<object, Schema>();
+    Object.defineProperty(runtime, decoratedSchemasKey, {
+        configurable: false,
+        enumerable: false,
+        value: registry,
+        writable: false,
+    });
+    return registry;
 }
 
 function fail(message: string): never {
@@ -131,7 +153,9 @@ function normalizeMixin(mixin: ServiceMixin, ancestors: Set<object>): Partial<Se
     if (typeof mixin === 'function') {
         const decoratedSchema = decoratedSchemas.get(mixin);
         if (!decoratedSchema) {
-            return fail('Class mixins must also be decorated with @service.');
+            return fail(
+                'Class mixins must be decorated with @service by a compatible moldecor v2 build. Rebuild packages that bundle an older moldecor version.',
+            );
         }
         source = decoratedSchema;
     } else if (mixin && typeof mixin === 'object') {

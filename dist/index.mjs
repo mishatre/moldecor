@@ -1,6 +1,7 @@
 //#region src/moldecor.ts
 const membersKey = Symbol("moldecor:members");
-const decoratedSchemas = /* @__PURE__ */ new WeakMap();
+const decoratedSchemasKey = Symbol.for("moldecor:v2:decorated-schemas");
+const decoratedSchemas = getDecoratedSchemas();
 const lifecycleNames = /* @__PURE__ */ new Set([
 	"created",
 	"merged",
@@ -15,6 +16,22 @@ function installSymbolMetadata() {
 		value: Symbol("Symbol.metadata"),
 		writable: false
 	});
+}
+function getDecoratedSchemas() {
+	const runtime = globalThis;
+	const existing = runtime[decoratedSchemasKey];
+	if (existing !== void 0) {
+		if (existing instanceof WeakMap) return existing;
+		return fail("The shared decorated-service registry is invalid.");
+	}
+	const registry = /* @__PURE__ */ new WeakMap();
+	Object.defineProperty(runtime, decoratedSchemasKey, {
+		configurable: false,
+		enumerable: false,
+		value: registry,
+		writable: false
+	});
+	return registry;
 }
 function fail(message) {
 	throw new TypeError(`[moldecor] ${message}`);
@@ -56,7 +73,7 @@ function normalizeMixin(mixin, ancestors) {
 	let source;
 	if (typeof mixin === "function") {
 		const decoratedSchema = decoratedSchemas.get(mixin);
-		if (!decoratedSchema) return fail("Class mixins must also be decorated with @service.");
+		if (!decoratedSchema) return fail("Class mixins must be decorated with @service by a compatible moldecor v2 build. Rebuild packages that bundle an older moldecor version.");
 		source = decoratedSchema;
 	} else if (mixin && typeof mixin === "object") source = mixin;
 	else return fail("Mixins must be service schemas or classes decorated with @service.");

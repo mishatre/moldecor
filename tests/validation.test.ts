@@ -106,7 +106,9 @@ describe('decorator validation', () => {
             @service({ name: 'invalid-mixin', mixins: [UndecoratedMixin] })
             class InvalidMixin extends Service {}
             return InvalidMixin;
-        }).toThrow('Class mixins must also be decorated');
+        }).toThrow(
+            'Class mixins must be decorated with @service by a compatible moldecor v2 build',
+        );
 
         expect(() => {
             @service({ name: 'primitive-mixin', mixins: [42 as any] })

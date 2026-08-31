@@ -2,6 +2,12 @@
 
 All notable changes to moldecor are documented here.
 
+## 2.0.0-rc.1
+
+### Fixed
+
+- Decorated class mixins are now recognized across ESM/CommonJS, bundled copies, and pnpm peer-dependency package instances within the same process.
+
 ## 2.0.0-rc.0
 
 ### Added

@@ -45,6 +45,40 @@ try {
     assert.deepEqual(Object.keys(esm).sort(), expectedExports);
     assert.deepEqual(Object.keys(cjs).sort(), expectedExports);
 
+    class CompatibleService {
+        parseServiceSchema() {}
+    }
+    const classContext = (name) => ({
+        kind: 'class',
+        metadata: Object.create(null),
+        name,
+    });
+    class EsmMixin extends CompatibleService {}
+    const DecoratedEsmMixin = esm.service({ name: 'esm-mixin' })(
+        EsmMixin,
+        classContext('EsmMixin'),
+    );
+    class CjsConsumer extends CompatibleService {}
+    assert.doesNotThrow(() =>
+        cjs.service({ name: 'cjs-consumer', mixins: [DecoratedEsmMixin] })(
+            CjsConsumer,
+            classContext('CjsConsumer'),
+        ),
+    );
+
+    class CjsMixin extends CompatibleService {}
+    const DecoratedCjsMixin = cjs.service({ name: 'cjs-mixin' })(
+        CjsMixin,
+        classContext('CjsMixin'),
+    );
+    class EsmConsumer extends CompatibleService {}
+    assert.doesNotThrow(() =>
+        esm.service({ name: 'esm-consumer', mixins: [DecoratedCjsMixin] })(
+            EsmConsumer,
+            classContext('EsmConsumer'),
+        ),
+    );
+
     const files = manifest.files.map(({ path }) => path);
     const allowedRootFiles = new Set(['CHANGELOG.md', 'LICENSE', 'README.md', 'package.json']);
 
@@ -57,7 +91,9 @@ try {
         `Unexpected files in npm tarball: ${files.join(', ')}`,
     );
 
-    console.log(`Validated ${files.length} npm package files and both module formats.`);
+    console.log(
+        `Validated ${files.length} npm package files, both module formats, and cross-format mixins.`,
+    );
 } finally {
     rmSync(temporaryDirectory, { force: true, recursive: true });
 }
