@@ -24,6 +24,20 @@ type EventOptions = Omit<EventSchema, 'handler' | 'service'> & {
  * method. Adapter-specific option groups (`redis`, `amqp`, `kafka`, `nats`) are passed through.
  */
 interface ChannelOptions {
+  /**
+   * Schema key of the consumer inside the channel map, defaulting to the decorated method name.
+   * It is the *logical* channel name: `@moleculer/channels` prefixes it with the adapter prefix
+   * (the broker namespace) to build the physical topic, which is exactly what
+   * `broker.sendToChannel(key)` publishes to. Use it when the logical name cannot be a method
+   * name, e.g. `"v1.delivery.ready"`. Moldecor reads this option and never forwards it to the
+   * middleware.
+   */
+  key?: string;
+  /**
+   * Physical topic to consume, used verbatim by the middleware and therefore *not* prefixed with
+   * the adapter prefix. Only omit it when you consume a topic nobody publishes to with
+   * `broker.sendToChannel`, which always applies the adapter prefix itself.
+   */
   name?: string;
   group?: string;
   context?: boolean;

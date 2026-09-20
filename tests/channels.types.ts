@@ -30,6 +30,15 @@ const options: ChannelOptions = {
 const definition: Channel = { ...options, handler: () => undefined };
 void definition;
 
+// `key` picks the schema key and is read by moldecor, so it is not part of the channel definition.
+const keyedOptions: ChannelOptions = { group: 'orders', key: 'v1.delivery.ready' };
+const keyedDefinition: Channel = { ...keyedOptions, handler: () => undefined };
+void keyedDefinition;
+
+// @ts-expect-error `key` must be a string.
+const invalidKey: ChannelOptions = { key: 42 };
+void invalidKey;
+
 // Adapter specific options are passed through untouched.
 const adapterOptions: ChannelOptions = {
     amqp: { queueOptions: { durable: true } },
@@ -63,6 +72,16 @@ class TypedChannelsService extends Service {
     @channel({ context: true, group: 'orders' })
     protected onOrderContext(ctx: Context<{ id: number }>) {
         return ctx.params.id;
+    }
+
+    @channel({ group: 'orders', key: 'v1.delivery.ready' })
+    protected onDeliveryReady(payload: { id: number }) {
+        return payload.id;
+    }
+
+    @channel({ group: 'orders', key: 'delivery.ready', name: 'external.delivery.ready' })
+    protected onExternalDelivery(payload: unknown) {
+        return payload;
     }
 
     @channel({ name: 'external.topic' }, { schemaProperty: 'redisChannels' })

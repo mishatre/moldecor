@@ -2,6 +2,16 @@
 
 All notable changes to moldecor are documented here.
 
+## 2.0.0-rc.3
+
+### Added
+
+- `@channel` accepts a `key` option that sets the channel's schema key independently of the decorated method name, so dotted logical names like `"v1.delivery.ready"` stay eligible for the adapter prefix and are reachable with `broker.sendToChannel("v1.delivery.ready")`. It also lets symbol-named channel methods be registered without an explicit `name`.
+
+### Changed
+
+- Documented the two channel names of `@moleculer/channels`: the schema key (prefixed with the adapter prefix, the broker namespace by default) and the verbatim `name` topic, which opts out of that prefix while `sendToChannel` keeps applying it.
+
 ## 2.0.0-rc.2
 
 ### Added

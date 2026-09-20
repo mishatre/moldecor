@@ -130,14 +130,54 @@ class OrdersService extends Service {
     async onPaymentProcessed(ctx: Context<{ id: number }>) {
         this.logger.info(`Payment ${ctx.params.id} for ${ctx.meta.customerId}`);
     }
+
+    // Keyed consumer: subscribed as `v1.delivery.ready` and reached by the same name.
+    @channel({ group: 'dispatch', key: 'v1.delivery.ready' })
+    async onDeliveryReady(payload: { id: number }) {
+        await this.actions.dispatch(payload.id);
+    }
 }
 ```
 
-The method name is the channel name, so `@channel()` on `onOrderCreated` consumes `onOrderCreated`. Pass `name` to consume a different topic, such as one owned by another system, and pass any other channel option (`group`, `maxInFlight`, `maxRetries`, `deadLettering`, `tracing`, adapter options like `redis` or `amqp`) to forward it to the middleware unchanged. The handler comes from the decorated method and is bound to the service instance.
+A `@moleculer/channels` consumer has two names, and moldecor exposes both:
 
-Because the middleware prefixes a channel name with the adapter prefix (the broker namespace), moldecor only sets `name` when you provide it. An explicit `name` is used verbatim as the topic, exactly as it would be in a hand-written schema.
+- The **schema key** is the logical channel name. It defaults to the method name and can be set with `key` when the logical name is not usable as a method name, such as `'v1.delivery.ready'`. `@moleculer/channels` builds the physical topic by prefixing it with the adapter prefix (by default the broker namespace), which is exactly what `broker.sendToChannel(key)` publishes to. `key` is read by moldecor and never forwarded to the middleware.
+- The **`name` option** is the physical topic, used verbatim and therefore *not* prefixed. It is the escape hatch for topics owned by another system, and it opts the consumer out of the adapter prefix.
+
+Both can be combined to keep a readable key for a foreign topic: `@channel({ key: 'delivery.ready', name: 'external.delivery.ready' })` registers the consumer as `delivery.ready` and subscribes to `external.delivery.ready` as-is.
+
+Any other channel option (`group`, `maxInFlight`, `maxRetries`, `deadLettering`, `tracing`, adapter options like `redis` or `amqp`) is forwarded to the middleware unchanged. The handler comes from the decorated method and is bound to the service instance.
 
 Channels declared with `context: true` receive a Moleculer `Context` whose `params` hold the payload; every other channel receives the payload itself. The second argument is always the raw adapter message.
+
+### Channels and broker namespaces
+
+The adapter prefix defaults to `broker.namespace` (or the adapter `prefix` option) and is applied in two places by the middleware:
+
+- on subscribe, to the **schema key** of a channel that has no `name`;
+- on publish, to whatever name is passed to `broker.sendToChannel`, always.
+
+So the two sides agree as long as you publish with the schema key:
+
+```ts
+const broker = new ServiceBroker({ namespace: 'support-mail', /* ... */ });
+
+@service({ name: 'orders' })
+class OrdersService extends Service {
+    // Subscribes to `support-mail.onOrderCreated`, reached by sendToChannel('onOrderCreated').
+    @channel({ group: 'orders' })
+    async onOrderCreated(payload: unknown) {}
+
+    // Subscribes to `support-mail.v1.delivery.ready`, reached by sendToChannel('v1.delivery.ready').
+    @channel({ group: 'orders', key: 'v1.delivery.ready' })
+    async onDeliveryReady(payload: unknown) {}
+}
+```
+
+An explicit `name` breaks that symmetry: subscribing verbatim to `external.topic` while `sendToChannel('external.topic')` publishes to `support-mail.external.topic`. Such a channel is consumed from an external producer only. Two rules follow:
+
+- Omit `name` (or use `key`) unless you deliberately want to bypass the adapter prefix.
+- Remember that `sendToChannel` always prefixes, and that `ctx.channelName` and `ctx.parentChannelName` are already prefixed topics. Passing them back to `sendToChannel` double-prefixes the name.
 
 ### Custom schema properties
 
@@ -179,7 +219,7 @@ Channel maps provided by other mixins are still replaced by decorated channels, 
 - `@service(options)` creates a Moleculer service class. `name` is required.
 - `@action(options?)` registers an action.
 - `@event(options?)` registers an event listener.
-- `@channel(options?, target?)` registers a `@moleculer/channels` consumer.
+- `@channel(options?, target?)` registers a `@moleculer/channels` consumer. `key` names the schema key, `name` sets the verbatim physical topic.
 - `@method` registers a service method.
 - `@created`, `@merged`, `@started`, and `@stopped` register reserved lifecycle methods with matching names.
 - `@lifecycle` registers a non-reserved custom schema lifecycle method used by a Moleculer extension.

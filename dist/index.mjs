@@ -186,15 +186,21 @@ function channelProperty(target) {
 	if (reservedSchemaProperties.has(property)) return fail(`@channel cannot target the reserved Moleculer schema property "${property}".`);
 	return property;
 }
+function resolveChannelKey(explicitKey, explicitName, context) {
+	if (explicitKey === void 0) return memberName(context, explicitName, "channel");
+	if (typeof explicitKey !== "string" || explicitKey.trim().length === 0) return fail("@channel requires a non-empty string key.");
+	return explicitKey;
+}
 function channel(options = {}, target = {}) {
 	const property = channelProperty(target);
 	return (handler, context) => {
 		assertMethod(context, "channel");
-		const name = memberName(context, options.name, "channel");
+		const { key: explicitKey, ...definition } = options;
+		const key = resolveChannelKey(explicitKey, options.name, context);
 		const channels = getMembers(context).channels ??= {};
 		const definitions = channels[property] ??= {};
-		definitions[name] = {
-			...options,
+		definitions[key] = {
+			...definition,
 			handler
 		};
 	};

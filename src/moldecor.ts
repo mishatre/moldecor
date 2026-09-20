@@ -40,6 +40,20 @@ export type EventOptions = Omit<EventSchema, 'handler' | 'service'> & {
  * method. Adapter-specific option groups (`redis`, `amqp`, `kafka`, `nats`) are passed through.
  */
 export interface ChannelOptions {
+    /**
+     * Schema key of the consumer inside the channel map, defaulting to the decorated method name.
+     * It is the *logical* channel name: `@moleculer/channels` prefixes it with the adapter prefix
+     * (the broker namespace) to build the physical topic, which is exactly what
+     * `broker.sendToChannel(key)` publishes to. Use it when the logical name cannot be a method
+     * name, e.g. `"v1.delivery.ready"`. Moldecor reads this option and never forwards it to the
+     * middleware.
+     */
+    key?: string;
+    /**
+     * Physical topic to consume, used verbatim by the middleware and therefore *not* prefixed with
+     * the adapter prefix. Only omit it when you consume a topic nobody publishes to with
+     * `broker.sendToChannel`, which always applies the adapter prefix itself.
+     */
     name?: string;
     group?: string;
     context?: boolean;
@@ -373,6 +387,21 @@ function channelProperty(target: ChannelTarget): string {
     return property;
 }
 
+function resolveChannelKey(
+    explicitKey: string | undefined,
+    explicitName: string | undefined,
+    context: ClassMethodDecoratorContext<any, AnyMethod>,
+): string {
+    // Without `key` the schema key is `name` when given, otherwise the method name.
+    if (explicitKey === undefined) {
+        return memberName(context, explicitName, 'channel');
+    }
+    if (typeof explicitKey !== 'string' || explicitKey.trim().length === 0) {
+        return fail('@channel requires a non-empty string key.');
+    }
+    return explicitKey;
+}
+
 export function channel(options: ChannelOptions = {}, target: ChannelTarget = {}) {
     const property = channelProperty(target);
 
@@ -381,13 +410,18 @@ export function channel(options: ChannelOptions = {}, target: ChannelTarget = {}
         context: ClassMethodDecoratorContext<This, Value>,
     ): void => {
         assertMethod(context, 'channel');
-        const name = memberName(context, options.name, 'channel');
+
+        // `key` is moldecor-only: it picks the schema key and must not reach the middleware, which
+        // would treat it as an unknown channel option. `name` stays in the definition because an
+        // explicit `name` is the physical topic, used verbatim and never prefixed.
+        const { key: explicitKey, ...definition } = options;
+        const key = resolveChannelKey(explicitKey, options.name, context);
         const channels = (getMembers(context).channels ??= {});
         const definitions = (channels[property] ??= {});
 
-        // `name` is only carried into the definition when the caller set it, because the channels
-        // middleware prefixes an unnamed channel with the adapter prefix (the broker namespace).
-        definitions[name] = { ...options, handler };
+        // The channels middleware prefixes the key with the adapter prefix (the broker namespace)
+        // unless the definition carries a `name`, matching what `broker.sendToChannel` does.
+        definitions[key] = { ...definition, handler };
     };
 }
 

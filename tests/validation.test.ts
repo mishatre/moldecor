@@ -76,6 +76,31 @@ describe('decorator validation', () => {
             return NamedSymbolChannel;
         }).not.toThrow();
 
+        // `key` names the schema key, so a symbol-named method does not need a `name`.
+        expect(() => {
+            class KeyedSymbolChannel {
+                @channel({ key: 'keyed.channel' })
+                [symbol]() {}
+            }
+            return KeyedSymbolChannel;
+        }).not.toThrow();
+
+        expect(() => {
+            class EmptyKey {
+                @channel({ key: ' ' })
+                protected handler() {}
+            }
+            return EmptyKey;
+        }).toThrow('@channel requires a non-empty string key');
+
+        expect(() => {
+            class InvalidKey {
+                @channel({ key: 42 as any })
+                protected handler() {}
+            }
+            return InvalidKey;
+        }).toThrow('@channel requires a non-empty string key');
+
         expect(() => {
             class EmptyProperty {
                 @channel({}, { schemaProperty: ' ' })

@@ -1,5 +1,5 @@
 import { Middleware as ChannelsMiddleware, type MiddlewareOptions } from '@moleculer/channels';
-import { Context, Service, ServiceBroker } from 'moleculer';
+import { type BrokerOptions, Context, Service, ServiceBroker } from 'moleculer';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { channel, service } from '../src/index.js';
@@ -10,6 +10,10 @@ interface ChannelDefinition {
     maxInFlight?: number;
     maxRetries?: number;
     name?: string;
+}
+
+interface ChannelAdapter {
+    addPrefixTopic(topicName: string): string;
 }
 
 type ChannelService = Service & {
@@ -27,16 +31,30 @@ describe('decorated Moleculer channels', () => {
         );
     });
 
-    function createBroker(options: MiddlewareOptions = { adapter: 'Fake' }): ServiceBroker {
+    function createBroker(
+        options: MiddlewareOptions = { adapter: 'Fake' },
+        brokerOptions: Partial<BrokerOptions> = {},
+    ): ServiceBroker {
         const broker = new ServiceBroker({
             logger: false,
             metrics: false,
             middlewares: [ChannelsMiddleware(options)],
             transporter: null,
             tracing: false,
+            ...brokerOptions,
         });
         brokers.push(broker);
         return broker;
+    }
+
+    /**
+     * Physical topic an adapter derives for a published name. The `sendToChannel` wrapper applies
+     * this prefix unconditionally, so it is the topic a producer really targets.
+     */
+    function publishedTopic(broker: ServiceBroker, name: string): string {
+        const adapter = (broker as ServiceBroker & { channelAdapter: ChannelAdapter })
+            .channelAdapter;
+        return adapter.addPrefixTopic(name);
     }
 
     function definitions(instance: Service, property = 'channels'): Record<string, unknown> {
@@ -226,6 +244,92 @@ describe('decorated Moleculer channels', () => {
         await broker.sendToChannel('onRedisTopic', { id: 5 });
 
         await expect(delivered.promise).resolves.toEqual({ id: 5 });
+    });
+
+    it('prefixes a keyed channel exactly like a hand-written schema key', async () => {
+        const delivered = deferred<unknown>();
+
+        @service({ name: 'dispatch' })
+        class DispatchService extends Service {
+            @channel({ group: 'dispatch', key: 'v1.delivery.ready' })
+            protected onDeliveryReady(payload: { id: number }) {
+                delivered.resolve(payload);
+                return payload.id;
+            }
+
+            @channel({ group: 'external', name: 'external.topic' })
+            protected onExternalTopic(payload: unknown) {
+                return payload;
+            }
+        }
+
+        const broker = createBroker({ adapter: 'Fake' }, { namespace: 'support-mail' });
+        const instance = broker.createService(DispatchService);
+
+        expect(Object.keys(definitions(instance)).sort()).toEqual([
+            'external.topic',
+            'v1.delivery.ready',
+        ]);
+        // `key` is moldecor-only: it names the schema key and must not reach the middleware, so the
+        // adapter prefix is applied to it and `sendToChannel(key)` reaches the consumer.
+        expect(definition(instance, 'v1.delivery.ready')).toMatchObject({ group: 'dispatch' });
+        expect(definition(instance, 'v1.delivery.ready').name).toBeUndefined();
+        expect(definition(instance, 'v1.delivery.ready')).not.toHaveProperty('key');
+        // An explicit `name` is the physical topic, so it opts out of the adapter prefix while
+        // `sendToChannel` keeps prefixing: such a channel only receives external messages.
+        expect(definition(instance, 'external.topic').name).toBe('external.topic');
+        expect(publishedTopic(broker, 'external.topic')).toBe('support-mail.external.topic');
+
+        await broker.start();
+        await broker.sendToChannel('v1.delivery.ready', { id: 42 });
+
+        await expect(delivered.promise).resolves.toEqual({ id: 42 });
+    });
+
+    it('separates the schema key from the verbatim topic', () => {
+        @service({ name: 'bridge' })
+        class BridgeService extends Service {
+            @channel({ group: 'bridge', key: 'delivery.ready', name: 'external.delivery.ready' })
+            protected onExternalDelivery(payload: unknown) {
+                return payload;
+            }
+        }
+
+        const broker = createBroker();
+        const instance = broker.createService(BridgeService);
+
+        expect(Object.keys(definitions(instance))).toEqual(['delivery.ready']);
+        expect(definition(instance, 'delivery.ready')).toMatchObject({
+            group: 'bridge',
+            name: 'external.delivery.ready',
+        });
+        expect(definition(instance, 'delivery.ready')).not.toHaveProperty('key');
+    });
+
+    it('merges explicit service channel options over a keyed channel', () => {
+        @service({
+            name: 'keyed-configurable',
+            channels: {
+                'v1.delivery.ready': { maxRetries: 4 },
+            },
+        })
+        class KeyedConfigurableService extends Service {
+            @channel({ group: 'dispatch', key: 'v1.delivery.ready', maxInFlight: 2 })
+            protected onDeliveryReady() {
+                return 'ready';
+            }
+        }
+
+        const broker = createBroker();
+        const instance = broker.createService(KeyedConfigurableService);
+
+        expect(definition(instance, 'v1.delivery.ready')).toMatchObject({
+            group: 'dispatch',
+            maxInFlight: 2,
+            maxRetries: 4,
+        });
+        const handler = definition(instance, 'v1.delivery.ready').handler as () => string;
+        expect(handler.call(instance)).toBe('ready');
     });
 
     it('replaces mixin channel maps with decorated channels', () => {
