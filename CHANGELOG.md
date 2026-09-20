@@ -2,6 +2,13 @@
 
 All notable changes to moldecor are documented here.
 
+## 2.0.0-rc.2
+
+### Added
+
+- `@channel` registers `@moleculer/channels` consumers on decorated methods, including the optional `schemaProperty` target used by multi-adapter setups. Verified against `@moleculer/channels` 0.3.x.
+- Explicit `channels` passed to `@service` are merged over decorated channels per channel name, because Moleculer replaces that schema property instead of merging it.
+
 ## 2.0.0-rc.1
 
 ### Fixed

@@ -1,7 +1,7 @@
 import { Service } from 'moleculer';
 import { describe, expect, it } from 'vitest';
 
-import { action, created, event, lifecycle, method, service } from '../src/index.js';
+import { action, channel, created, event, lifecycle, method, service } from '../src/index.js';
 
 describe('decorator validation', () => {
     it('rejects static and private members', () => {
@@ -39,6 +39,74 @@ describe('decorator validation', () => {
             }
             return SymbolEvent;
         }).not.toThrow();
+    });
+
+    it('validates channel members and schema properties', () => {
+        const symbol = Symbol('handler');
+
+        expect(() => {
+            class StaticChannel {
+                @channel()
+                static invalid() {}
+            }
+            return StaticChannel;
+        }).toThrow('@channel cannot decorate a static method');
+
+        expect(() => {
+            class PrivateChannel {
+                @channel()
+                #invalid() {}
+            }
+            return PrivateChannel;
+        }).toThrow('@channel cannot decorate a private method');
+
+        expect(() => {
+            class SymbolChannel {
+                @channel()
+                [symbol]() {}
+            }
+            return SymbolChannel;
+        }).toThrow('requires a non-empty string name');
+
+        expect(() => {
+            class NamedSymbolChannel {
+                @channel({ name: 'named.channel' })
+                [symbol]() {}
+            }
+            return NamedSymbolChannel;
+        }).not.toThrow();
+
+        expect(() => {
+            class EmptyProperty {
+                @channel({}, { schemaProperty: ' ' })
+                protected handler() {}
+            }
+            return EmptyProperty;
+        }).toThrow('@channel requires a non-empty string schemaProperty');
+
+        expect(() => {
+            class InvalidProperty {
+                @channel({}, { schemaProperty: 42 as any })
+                protected handler() {}
+            }
+            return InvalidProperty;
+        }).toThrow('@channel requires a non-empty string schemaProperty');
+
+        expect(() => {
+            class ReservedProperty {
+                @channel({}, { schemaProperty: 'actions' })
+                protected handler() {}
+            }
+            return ReservedProperty;
+        }).toThrow('cannot target the reserved Moleculer schema property "actions"');
+
+        expect(() => {
+            class InvalidTarget {
+                @channel({}, null as any)
+                protected handler() {}
+            }
+            return InvalidTarget;
+        }).toThrow('@channel requires a target options object');
     });
 
     it('enforces reserved lifecycle decorator names', () => {

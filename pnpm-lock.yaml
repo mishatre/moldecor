@@ -14,6 +14,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.10
         version: 2.5.10
+      '@moleculer/channels':
+        specifier: ^0.3.1
+        version: 0.3.1(moleculer@0.15.1(debug@4.4.3(supports-color@7.2.0)))
       '@types/node':
         specifier: ^22.20.1
         version: 22.20.1
@@ -150,6 +153,12 @@ packages:
 
   '@loaderkit/resolve@1.0.6':
     resolution: {integrity: sha512-G8FdIoF5CypfwmD9rl8BXod5HDn8JqB0CCNBXDTaRZ+yRYhARrrSToX1zg1zy9jX3zLqigsELwhT4gNtkdQAUg==}
+
+  '@moleculer/channels@0.3.1':
+    resolution: {integrity: sha512-RJAPooY6sUUEuWv5A75BNJMYUa/0fh9ZFdXDGqbsGApg86AzQeNFuOGfikvKWtbEZmmMmPI27W0877hWJq/uAQ==}
+    engines: {node: '>= 22.x.x'}
+    peerDependencies:
+      moleculer: ^0.14.12 || ^0.15.0
 
   '@oxc-project/types@0.147.0':
     resolution: {integrity: sha512-IJ3s6ltHLp45S0bh7phkX+gJO7A1Wuz2EaqpAhb8WjqDwbzMiWKHhyyT42tskaWjEYXtHtVCPpnBJVT9+dcRLg==}
@@ -1325,6 +1334,12 @@ snapshots:
   '@loaderkit/resolve@1.0.6':
     dependencies:
       '@braidai/lang': 1.1.2
+
+  '@moleculer/channels@0.3.1(moleculer@0.15.1(debug@4.4.3(supports-color@7.2.0)))':
+    dependencies:
+      lodash: 4.18.1
+      moleculer: 0.15.1(debug@4.4.3(supports-color@7.2.0))
+      semver: 7.8.5
 
   '@oxc-project/types@0.147.0': {}
 

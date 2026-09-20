@@ -9,6 +9,22 @@ const lifecycleNames = /* @__PURE__ */ new Set([
 	"started",
 	"stopped"
 ]);
+const reservedSchemaProperties = /* @__PURE__ */ new Set([
+	"actions",
+	"created",
+	"dependencies",
+	"events",
+	"hooks",
+	"merged",
+	"metadata",
+	"methods",
+	"mixins",
+	"name",
+	"settings",
+	"started",
+	"stopped",
+	"version"
+]);
 installSymbolMetadata();
 function installSymbolMetadata() {
 	if (!Object.hasOwn(Symbol, "metadata")) Object.defineProperty(Symbol, "metadata", {
@@ -36,6 +52,9 @@ function getDecoratedSchemas() {
 }
 function fail(message) {
 	throw new TypeError(`[moldecor] ${message}`);
+}
+function isPlainObject(value) {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function getMembers(context) {
 	const metadata = context.metadata;
@@ -68,6 +87,7 @@ function toSchema(members) {
 	if (members.events) schema.events = members.events;
 	if (members.methods) schema.methods = members.methods;
 	if (members.lifecycle) Object.assign(schema, members.lifecycle);
+	for (const [property, definitions] of Object.entries(members.channels ?? {})) Object.assign(schema, { [property]: definitions });
 	return schema;
 }
 function normalizeMixin(mixin, ancestors) {
@@ -104,7 +124,22 @@ function service(options) {
 		}
 		const { mixins = [], ...schemaOptions } = options;
 		if (!Array.isArray(mixins)) return fail("@service mixins must be an array.");
-		const ownSchema = toSchema(getMembers(context));
+		const members = getMembers(context);
+		const ownSchema = toSchema(members);
+		for (const [property, definitions] of Object.entries(members.channels ?? {})) {
+			const explicit = schemaOptions[property];
+			if (!isPlainObject(explicit)) continue;
+			const merged = { ...definitions };
+			for (const [name, override] of Object.entries(explicit)) {
+				const decorated = merged[name];
+				merged[name] = isPlainObject(decorated) && isPlainObject(override) ? {
+					...decorated,
+					...override
+				} : override;
+			}
+			Object.assign(ownSchema, { [property]: merged });
+			delete schemaOptions[property];
+		}
 		const schema = {
 			...schemaOptions,
 			mixins: [ownSchema, ...mixins.map((mixin) => normalizeMixin(mixin, /* @__PURE__ */ new Set()))]
@@ -145,6 +180,26 @@ function event(options = {}) {
 		});
 	};
 }
+function channelProperty(target) {
+	if (!isPlainObject(target)) return fail("@channel requires a target options object.");
+	const property = target.schemaProperty ?? "channels";
+	if (typeof property !== "string" || property.trim().length === 0) return fail("@channel requires a non-empty string schemaProperty.");
+	if (reservedSchemaProperties.has(property)) return fail(`@channel cannot target the reserved Moleculer schema property "${property}".`);
+	return property;
+}
+function channel(options = {}, target = {}) {
+	const property = channelProperty(target);
+	return (handler, context) => {
+		assertMethod(context, "channel");
+		const name = memberName(context, options.name, "channel");
+		const channels = getMembers(context).channels ??= {};
+		const definitions = channels[property] ??= {};
+		definitions[name] = {
+			...options,
+			handler
+		};
+	};
+}
 function method(handler, context) {
 	assertMethod(context, "method");
 	const name = memberName(context, void 0, "method");
@@ -175,6 +230,7 @@ function lifecycle(handler, context) {
 }
 //#endregion
 exports.action = action;
+exports.channel = channel;
 exports.created = created;
 exports.defineSettings = defineSettings;
 exports.event = event;

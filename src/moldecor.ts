@@ -1,5 +1,6 @@
 import type {
     ActionSchema,
+    Context,
     EventSchema,
     Service as MoleculerService,
     ServiceSchema,
@@ -34,9 +35,63 @@ export type EventOptions = Omit<EventSchema, 'handler' | 'service'> & {
     service?: never;
 };
 
+/**
+ * Definition of a `@moleculer/channels` consumer, minus the handler which comes from the decorated
+ * method. Adapter-specific option groups (`redis`, `amqp`, `kafka`, `nats`) are passed through.
+ */
+export interface ChannelOptions {
+    name?: string;
+    group?: string;
+    context?: boolean;
+    maxInFlight?: number;
+    maxRetries?: number;
+    /**
+     * Dead-letter options, mirroring the published `@moleculer/channels` declaration. The
+     * middleware also accepts a `null` return from both transform callbacks at runtime.
+     */
+    deadLettering?: {
+        enabled: boolean;
+        queueName?: string;
+        exchangeName?: string;
+        exchangeOptions?: Record<string, unknown>;
+        queueOptions?: Record<string, unknown>;
+        transformErrorToHeaders?: (error: Error) => Record<string, string>;
+        transformHeadersToErrorData?: (headers: Record<string, string>) => Record<string, unknown>;
+        errorInfoTTL?: number;
+    };
+    tracing?:
+        | boolean
+        | {
+              enabled?: boolean;
+              spanName?: string | ((ctx: Context<any, any>) => string);
+              tags?:
+                  | Record<string, unknown>
+                  | ((ctx: Context<any, any>) => Record<string, unknown>);
+              safetyTags?: boolean;
+          };
+    /** Consumer ID, owned by the channels middleware. */
+    id?: string;
+    handler?: never;
+    service?: never;
+    [key: string]: unknown;
+}
+
+/** Service schema location of a decorated channel. */
+export interface ChannelTarget {
+    /**
+     * Name of the service schema property holding the channel definitions. It must match the
+     * `schemaProperty` option of the channels middleware and defaults to `"channels"`.
+     */
+    schemaProperty?: string;
+}
+
+type ChannelDefinition = Omit<ChannelOptions, 'handler' | 'service'> & { handler: AnyMethod };
+
 interface DecoratedMembers {
     actions?: Record<string, ActionSchema>;
     events?: Record<string, EventSchema>;
+    /** Schema property -> channel name -> channel definition. */
+    channels?: Record<string, Record<string, ChannelDefinition>>;
     methods?: Record<string, AnyMethod>;
     lifecycle?: Record<string, AnyMethod>;
 }
@@ -47,6 +102,22 @@ const membersKey = Symbol('moldecor:members');
 const decoratedSchemasKey = Symbol.for('moldecor:v2:decorated-schemas');
 const decoratedSchemas = getDecoratedSchemas();
 const lifecycleNames = new Set(['created', 'merged', 'started', 'stopped']);
+const reservedSchemaProperties = new Set([
+    'actions',
+    'created',
+    'dependencies',
+    'events',
+    'hooks',
+    'merged',
+    'metadata',
+    'methods',
+    'mixins',
+    'name',
+    'settings',
+    'started',
+    'stopped',
+    'version',
+]);
 
 installSymbolMetadata();
 
@@ -82,6 +153,10 @@ function getDecoratedSchemas(): WeakMap<object, Schema> {
 
 function fail(message: string): never {
     throw new TypeError(`[moldecor] ${message}`);
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function getMembers(context: { metadata: object }): DecoratedMembers {
@@ -144,6 +219,9 @@ function toSchema(members: DecoratedMembers): Schema {
     if (members.events) schema.events = members.events;
     if (members.methods) schema.methods = members.methods;
     if (members.lifecycle) Object.assign(schema, members.lifecycle);
+    for (const [property, definitions] of Object.entries(members.channels ?? {})) {
+        Object.assign(schema, { [property]: definitions });
+    }
     return schema;
 }
 
@@ -215,7 +293,29 @@ export function service<S extends ServiceSettingSchema>(options: ServiceOptions<
             return fail('@service mixins must be an array.');
         }
 
-        const ownSchema = toSchema(getMembers(context));
+        const members = getMembers(context);
+        const ownSchema = toSchema(members);
+
+        for (const [property, definitions] of Object.entries(members.channels ?? {})) {
+            const explicit = schemaOptions[property];
+            if (!isPlainObject(explicit)) continue;
+
+            // Moleculer has no merge rule for channel definitions, so a service level property
+            // would replace the decorated definitions outright. Merge them per channel name
+            // instead, letting explicit options win while the decorated handlers survive.
+            const merged: Record<string, unknown> = { ...definitions };
+            for (const [name, override] of Object.entries(explicit)) {
+                const decorated = merged[name];
+                merged[name] =
+                    isPlainObject(decorated) && isPlainObject(override)
+                        ? { ...decorated, ...override }
+                        : override;
+            }
+
+            Object.assign(ownSchema, { [property]: merged });
+            delete schemaOptions[property];
+        }
+
         const schema = {
             ...schemaOptions,
             mixins: [ownSchema, ...mixins.map((mixin) => normalizeMixin(mixin, new Set<object>()))],
@@ -256,6 +356,38 @@ export function event(options: EventOptions = {}) {
         assertMethod(context, 'event');
         const name = memberName(context, options.name, 'event');
         put(getMembers(context), 'events', name, { ...options, name, handler });
+    };
+}
+
+function channelProperty(target: ChannelTarget): string {
+    if (!isPlainObject(target)) {
+        return fail('@channel requires a target options object.');
+    }
+    const property = target.schemaProperty ?? 'channels';
+    if (typeof property !== 'string' || property.trim().length === 0) {
+        return fail('@channel requires a non-empty string schemaProperty.');
+    }
+    if (reservedSchemaProperties.has(property)) {
+        return fail(`@channel cannot target the reserved Moleculer schema property "${property}".`);
+    }
+    return property;
+}
+
+export function channel(options: ChannelOptions = {}, target: ChannelTarget = {}) {
+    const property = channelProperty(target);
+
+    return <This, Value extends AnyMethod>(
+        handler: Value,
+        context: ClassMethodDecoratorContext<This, Value>,
+    ): void => {
+        assertMethod(context, 'channel');
+        const name = memberName(context, options.name, 'channel');
+        const channels = (getMembers(context).channels ??= {});
+        const definitions = (channels[property] ??= {});
+
+        // `name` is only carried into the definition when the caller set it, because the channels
+        // middleware prefixes an unnamed channel with the adapter prefix (the broker namespace).
+        definitions[name] = { ...options, handler };
     };
 }
 

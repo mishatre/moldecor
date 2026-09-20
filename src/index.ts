@@ -1,5 +1,7 @@
 export type {
     ActionOptions,
+    ChannelOptions,
+    ChannelTarget,
     EventOptions,
     ServiceMixin,
     ServiceOptions,
@@ -7,6 +9,7 @@ export type {
 } from './moldecor.js';
 export {
     action,
+    channel,
     created,
     defineSettings,
     event,

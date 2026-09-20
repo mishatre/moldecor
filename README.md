@@ -102,17 +102,90 @@ Schema precedence follows Moleculer itself, from lowest to highest:
 2. Members produced by moldecor method decorators.
 3. Explicit schema properties passed to `@service`, such as `actions` or `hooks`.
 
+## Channels
+
+`@moleculer/channels` consumers are declared with `@channel`:
+
+```ts
+import { Middleware as ChannelsMiddleware } from '@moleculer/channels';
+import { Context, Service, ServiceBroker } from 'moleculer';
+import { channel, service } from 'moldecor';
+
+const broker = new ServiceBroker({
+    middlewares: [
+        ChannelsMiddleware({
+            adapter: 'redis://localhost:6379',
+        }),
+    ],
+});
+
+@service({ name: 'orders' })
+class OrdersService extends Service {
+    @channel({ group: 'orders', maxRetries: 2 })
+    async onOrderCreated(payload: { id: number }) {
+        await this.actions.fulfill(payload.id);
+    }
+
+    @channel({ context: true, group: 'payments' })
+    async onPaymentProcessed(ctx: Context<{ id: number }>) {
+        this.logger.info(`Payment ${ctx.params.id} for ${ctx.meta.customerId}`);
+    }
+}
+```
+
+The method name is the channel name, so `@channel()` on `onOrderCreated` consumes `onOrderCreated`. Pass `name` to consume a different topic, such as one owned by another system, and pass any other channel option (`group`, `maxInFlight`, `maxRetries`, `deadLettering`, `tracing`, adapter options like `redis` or `amqp`) to forward it to the middleware unchanged. The handler comes from the decorated method and is bound to the service instance.
+
+Because the middleware prefixes a channel name with the adapter prefix (the broker namespace), moldecor only sets `name` when you provide it. An explicit `name` is used verbatim as the topic, exactly as it would be in a hand-written schema.
+
+Channels declared with `context: true` receive a Moleculer `Context` whose `params` hold the payload; every other channel receives the payload itself. The second argument is always the raw adapter message.
+
+### Custom schema properties
+
+Each channels middleware reads its definitions from a schema property that defaults to `channels`. The optional second decorator argument registers a channel under a different property, which is how several adapters are combined:
+
+```ts
+@service({ name: 'orders' })
+class OrdersService extends Service {
+    @channel({ group: 'orders' }, { schemaProperty: 'redisChannels' })
+    async onRedisTopic(payload: unknown) {
+        // Consumed by ChannelsMiddleware({ schemaProperty: 'redisChannels' })
+    }
+}
+```
+
+The property must not be one of the schema properties Moleculer merges itself (`actions`, `events`, `methods`, `hooks`, `settings`, `metadata`, `mixins`, `dependencies`, `name`, `version`, or a lifecycle handler).
+
+### Channel precedence
+
+Unlike `actions` and `events`, `channels` is not a schema property Moleculer knows how to merge: a schema that sets it replaces the whole map below it. Moldecor therefore merges explicit service options over decorated channels per channel name, so the decorated handler stays and only the given options are overridden:
+
+```ts
+@service({
+    name: 'orders',
+    channels: {
+        onOrderCreated: { group: 'overridden' },
+    },
+})
+class OrdersService extends Service {
+    @channel({ group: 'orders' })
+    async onOrderCreated(payload: unknown) {}
+}
+```
+
+Channel maps provided by other mixins are still replaced by decorated channels, because that merge happens inside Moleculer. Keep channel definitions in the service that owns the handler when composing mixins.
+
 ## API
 
 - `@service(options)` creates a Moleculer service class. `name` is required.
 - `@action(options?)` registers an action.
 - `@event(options?)` registers an event listener.
+- `@channel(options?, target?)` registers a `@moleculer/channels` consumer.
 - `@method` registers a service method.
 - `@created`, `@merged`, `@started`, and `@stopped` register reserved lifecycle methods with matching names.
 - `@lifecycle` registers a non-reserved custom schema lifecycle method used by a Moleculer extension.
 - `defineSettings(settings)` preserves and validates a service settings type.
 
-Decorators can only be applied to non-private, non-static instance methods. A symbol-named action or event must provide a string `name` option.
+Decorators can only be applied to non-private, non-static instance methods. A symbol-named action, event, or channel must provide a string `name` option.
 
 ## Migrating from v1
 

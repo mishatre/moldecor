@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 
 const expectedExports = [
     'action',
+    'channel',
     'created',
     'defineSettings',
     'event',
